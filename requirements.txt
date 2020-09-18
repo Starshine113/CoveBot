@@ -1,0 +1,5 @@
+discord
+tomlkit
+psycopg2
+aiopg
+cachetools

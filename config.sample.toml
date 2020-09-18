@@ -1,0 +1,31 @@
+[bot]
+# array of prefixes, first prefix will be used in status
+prefixes = ["c!", "c;", "--"]
+# bot token
+token = 'fancydiscordstring'
+
+[guild]
+# id of the guild the bot will operate in
+guild_id = 0
+
+# category where interview channels are made
+interview_category = 0
+# channel where interview transcripts are logged
+interview_log_channel = 0
+# if true, interviews are read-only for everyone, if false, only people with mod/helper roles can see them
+everyone_can_see_interviews = false
+# can be kept as 0 if everyone_can_see_interviews = false
+hide_interview_role = 0
+# role for seeing separate information channels
+gatekeeper_role = 0
+# member role, added when someone is approved
+member_role = 0
+
+# roles that can see and type in interview channels -- usually server mod + bots
+mod_roles = [756256769268777051, 755426692146659429]
+# roles that can always see but not interact with interview channels -- usually lower-ranking mods (which is why it also denies "manage messages")
+helper_roles = [756256814487699546]
+
+[db]
+# url to postgres database
+database_url = "postgresql://covebot:covebot@localhost/covebot"
