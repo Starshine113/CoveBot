@@ -149,6 +149,7 @@ class Interviews(commands.Cog):
         self, channel: discord.TextChannel, member: discord.Member
     ):
         archive_message = await channel.send("Archiving channel in five minutes.")
+        await self.conn.delete_interview_entry(channel.id)
         await asyncio.sleep(60)
         await archive_message.edit(content="Archiving channel in four minutes.")
         await member.send(
@@ -176,5 +177,4 @@ class Interviews(commands.Cog):
             f"Message log for #{channel.name} ({channel.id})",
             file=discord.File(message_file, filename="message_log.txt"),
         )
-        await self.conn.delete_interview_entry(channel.id)
         await channel.delete(reason="Interview: automatic deletion")
