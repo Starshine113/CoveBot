@@ -56,6 +56,10 @@ class Interviews(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         if member.guild.id == self.bot_config["guild"]["guild_id"]:
+            self.logger.log(
+                logging.INFO,
+                f"A new member joined {member.guild.name}: {member.name}#{member.discriminator} ({member.id})",
+            )
             await member.add_roles(
                 member.guild.get_role(self.bot_config["guild"]["gatekeeper_role"]),
                 reason="Interview: add gatekeeper role",
@@ -66,6 +70,10 @@ class Interviews(commands.Cog):
     @commands.Cog.listener()
     async def on_member_remove(self, member):
         if member.guild.id == self.bot_config["guild"]["guild_id"]:
+            self.logger.log(
+                logging.INFO,
+                f"A member left {member.guild.name}: {member.name}#{member.discriminator} ({member.id})",
+            )
             interview = await self.conn.get_interview(member.id)
             if interview:
                 channel_id = interview[1]
@@ -76,30 +84,31 @@ class Interviews(commands.Cog):
                 await self.queue_channel_deletion(channel, member, False)
 
     @commands.Cog.listener()
-    async def on_reaction_add(self, reaction, user):
-        print("reaction added")
-        self.logger.log(logging.INFO, "reaction added")
-        interview = await self.conn.get_interview_from_channel(
-            reaction.message.channel.id
-        )
+    async def on_raw_reaction_add(self, payload):
+        interview = await self.conn.get_interview_from_channel(payload.channel_id)
         if interview:
-            print("interview exists")
-            self.logger.log(logging.INFO, "interview exists")
-            if user.id == interview[1]:
-                print("user id is that of interviewee")
-                self.logger.log(logging.INFO, "user id is that of interviewee")
-                if reaction.emoji == "👍":
-                    print("emoji is :thumbsup:")
-                    self.logger.log(logging.INFO, "emoji is :thumbsup:")
-                    await self.send_next_question(interview, reaction.message.channel)
-                    await reaction.remove(user)
+            if (
+                payload.user_id == interview[0]
+                and payload.message_id == interview[3]
+                and str(payload.emoji) == "👍"
+            ):
+                channel = payload.member.guild.get_channel(payload.channel_id)
+                await self.send_next_question(
+                    interview,
+                    channel,
+                )
+                message = await channel.fetch_message(interview[3])
+                await message.remove_reaction("👍", payload.member)
 
     async def send_next_question(self, interview, channel: discord.TextChannel):
         questions = self.bot_config["guild"]["interview_questions"]
-        if interview[3] < len(questions):
-            await asyncio.sleep(2)
-            await channel.send(questions[interview[3]])
-            await self.conn.increment_question(interview[3] + 1, channel.id)
+        if interview[2] < len(questions):
+            self.logger.log(
+                logging.INFO,
+                f"Sent question {interview[2]} to #{channel.name} ({channel.id})",
+            )
+            await channel.send(questions[interview[2]])
+            await self.conn.increment_question(interview[2] + 1, channel.id)
 
     async def send_welcome_message(
         self, member: discord.Member, channel: discord.TextChannel
@@ -112,6 +121,10 @@ class Interviews(commands.Cog):
         )
         message = await channel.send(f"Welcome, {member.mention}!", embed=embed)
         await message.add_reaction("👍")
+        await message.pin()
+        self.logger.log(
+            logging.INFO, f"Sent welcome message to #{channel.name} ({channel.id})"
+        )
         return message
 
     async def create_interview_channel(self, member, guild):
@@ -151,6 +164,9 @@ class Interviews(commands.Cog):
         )
         welcome_message = await self.send_welcome_message(member, channel)
         await self.conn.create_interview(member.id, channel.id, welcome_message.id)
+        self.logger.log(
+            logging.INFO, f"Created welcome channel #{channel.name} ({channel.id})"
+        )
         return channel
 
     @commands.group(aliases=["in"])
@@ -190,6 +206,18 @@ class Interviews(commands.Cog):
                 reason="Interview: approved",
             )
             await ctx.send(f"Welcome to the server, {member.mention}!")
+            welcome_channel = member.guild.get_channel(
+                self.bot_config["guild"]["welcome_channel"]
+            )
+            await welcome_channel.send(
+                self.bot_config["guild"]["welcome_message"].format(
+                    guild=member.guild.name, mention=member.mention
+                )
+            )
+            self.logger.log(
+                logging.INFO,
+                f"Welcomed user {member.name}#{member.discriminator} ({member.id}) in #{welcome_channel.name} ({welcome_channel.id})",
+            )
             await self.queue_channel_deletion(ctx.message.channel, member, False)
 
     @interview.command()
@@ -206,6 +234,10 @@ class Interviews(commands.Cog):
     async def queue_channel_deletion(
         self, channel: discord.TextChannel, member: discord.Member, kick: bool
     ):
+        self.logger.log(
+            logging.INFO,
+            f"Deleting channel #{channel.name} ({channel.id}) in five minutes",
+        )
         archive_message = await channel.send("Archiving channel in five minutes.")
         await self.conn.delete_interview_entry(channel.id)
         await asyncio.sleep(60)
@@ -214,9 +246,9 @@ class Interviews(commands.Cog):
             await member.send(
                 f"We're really sorry, {member.mention}, but we do not think you are a good fit for {member.guild.name} at this time.\nYou were automatically kicked."
             )
-        await asyncio.sleep(60)
-        if kick:
+            await asyncio.sleep(5)
             await member.kick(reason="Interview: automatic kick after being denied.")
+        await asyncio.sleep(60)
         await archive_message.edit(content="Archiving channel in three minutes.")
         await asyncio.sleep(60)
         await archive_message.edit(content="Archiving channel in two minutes.")
@@ -237,4 +269,5 @@ class Interviews(commands.Cog):
             f"Message log for #{channel.name} ({channel.id})",
             file=discord.File(message_file, filename="message_log.txt"),
         )
+        self.logger.log(logging.INFO, f"Deleting #{channel.name} ({channel.id})")
         await channel.delete(reason="Interview: automatic deletion")

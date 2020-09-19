@@ -63,6 +63,8 @@ async def on_ready():
     print(bot.user.id)
     print("------")
 
+    logger.log(logging.INFO, f"Logged in as {bot.user.name} ({bot.user.id})")
+
     activity = "{}help".format(bot_config["bot"]["prefixes"][0])
 
     await bot.change_presence(activity=discord.Game(name=activity))
@@ -70,6 +72,8 @@ async def on_ready():
     conn = await botdb.init_dbconn(bot_config["db"]["database_url"])
 
     bot.add_cog(interviews.Interviews(bot, conn, bot_config, logger))
+
+    logger.log(logging.INFO, f"Bot ready")
 
 
 bot.run(bot_config["bot"]["token"])

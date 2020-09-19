@@ -12,6 +12,8 @@ guild_id = 0
 interview_category = 0
 # channel where interview transcripts are logged
 interview_log_channel = 0
+# channel where welcome messages are posted
+welcome_channel = 0
 # if true, interviews are read-only for everyone, if false, only people with mod/helper roles can see them
 everyone_can_see_interviews = false
 # can be kept as 0 if everyone_can_see_interviews = false
@@ -28,6 +30,9 @@ helper_roles = [756256814487699546]
 
 # array of questions
 interview_questions = [""]
+
+# available variables (currently): `guild` guild name, `mention` user mention
+welcome_message = "Welcome to {guild}, {mention}!"
 
 [db]
 # url to postgres database
