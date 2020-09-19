@@ -21,6 +21,7 @@ from datetime import datetime
 import io
 import logging
 import uuid
+import aiohttp
 import discord
 from discord.ext import commands
 
@@ -31,6 +32,7 @@ class Interviews(commands.Cog):
         self.conn = conn
         self.bot_config = config
         self.logger = logger
+        self.archive_in_progress = False
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -121,7 +123,6 @@ class Interviews(commands.Cog):
         )
         message = await channel.send(f"Welcome, {member.mention}!", embed=embed)
         await message.add_reaction("👍")
-        await message.pin()
         self.logger.log(
             logging.INFO, f"Sent welcome message to #{channel.name} ({channel.id})"
         )
@@ -231,6 +232,13 @@ class Interviews(commands.Cog):
             await self.queue_channel_deletion(ctx.message.channel, member, True)
             await asyncio.sleep(150)
 
+    @interview.command(name="manual-archive")
+    async def manual_archive(self, ctx):
+        interview = await self.conn.get_interview_from_channel(ctx.message.channel.id)
+        if interview:
+            member = ctx.message.author.guild.get_member(interview[0])
+            await self.archive_channel(member, ctx.message.channel)
+
     async def queue_channel_deletion(
         self, channel: discord.TextChannel, member: discord.Member, kick: bool
     ):
@@ -255,19 +263,51 @@ class Interviews(commands.Cog):
         await asyncio.sleep(60)
         await archive_message.edit(content="Archiving channel in one minute.")
         await asyncio.sleep(60)
+        await self.archive_channel(member, channel)
+
+    async def archive_channel(
+        self, member: discord.Member, channel: discord.TextChannel
+    ):
+        while self.archive_in_progress:
+            pass
+        self.archive_in_progress = True
         await channel.send("Archiving channel!")
         await asyncio.sleep(5)
-        log_channel = channel.guild.get_channel(
-            self.bot_config["guild"]["interview_log_channel"]
-        )
         messages = await channel.history(limit=200, oldest_first=True).flatten()
-        message_log = f"Message log for #{channel.name} ({channel.id}):\n==============================\n\n"
-        for message in messages:
-            message_log += f"{message.created_at.strftime('%Y-%m-%d %H:%M:%S')}: {message.author.name}#{message.author.discriminator} ({message.author.id}): {message.clean_content}\n\n"
-        message_file = io.BytesIO(bytes(message_log, "utf-8"))
-        await log_channel.send(
-            f"Message log for #{channel.name} ({channel.id})",
-            file=discord.File(message_file, filename="message_log.txt"),
-        )
+        await self.send_initial_webhook_message(member)
+        await asyncio.sleep(1)
+        for message in messages[1:]:
+            await self.send_webhook_message(message)
         self.logger.log(logging.INFO, f"Deleting #{channel.name} ({channel.id})")
         await channel.delete(reason="Interview: automatic deletion")
+        self.archive_in_progress = False
+
+    async def send_initial_webhook_message(self, member: discord.Member):
+        async with aiohttp.ClientSession() as session:
+            webhook = discord.Webhook.from_url(
+                self.bot_config["guild"]["log_webhook"],
+                adapter=discord.AsyncWebhookAdapter(session),
+            )
+            embed = discord.Embed(title=f"Interview with {member.display_name}")
+            embed.set_thumbnail(url=str(member.avatar_url))
+            embed.set_footer(text=f"User ID: {member.id}")
+            await webhook.send(
+                content="```\n" + ("=" * 30) + "\n```",
+                embed=embed,
+                username=self.bot.user.display_name,
+                avatar_url=self.bot.user.avatar_url,
+            )
+
+    async def send_webhook_message(self, message: discord.Message):
+        async with aiohttp.ClientSession() as session:
+            webhook = discord.Webhook.from_url(
+                self.bot_config["guild"]["log_webhook"],
+                adapter=discord.AsyncWebhookAdapter(session),
+            )
+            await webhook.send(
+                content=message.clean_content,
+                username=message.author.display_name,
+                avatar_url=message.author.avatar_url,
+                embeds=message.embeds,
+            )
+        await asyncio.sleep(1)
