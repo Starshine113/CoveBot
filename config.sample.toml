@@ -26,6 +26,9 @@ mod_roles = [756256769268777051, 755426692146659429]
 # roles that can always see but not interact with interview channels -- usually lower-ranking mods (which is why it also denies "manage messages")
 helper_roles = [756256814487699546]
 
+# array of questions
+interview_questions = [""]
+
 [db]
 # url to postgres database
 database_url = "postgresql://covebot:covebot@localhost/covebot"

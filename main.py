@@ -17,8 +17,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-import signal
-import sys
 import os
 from pathlib import Path
 import discord
@@ -71,15 +69,7 @@ async def on_ready():
 
     conn = await botdb.init_dbconn(bot_config["db"]["database_url"])
 
-    bot.add_cog(interviews.Interviews(bot, conn, bot_config))
-
-
-def signal_handler(sig, frame):
-    conn.close()
-    sys.exit(0)
-
-
-signal.signal(signal.SIGINT, signal_handler)
+    bot.add_cog(interviews.Interviews(bot, conn, bot_config, logger))
 
 
 bot.run(bot_config["bot"]["token"])

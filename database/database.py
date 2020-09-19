@@ -20,7 +20,7 @@ import psycopg2
 import aiopg
 
 
-DATABASE_VERSION = 2
+DATABASE_VERSION = 4
 
 
 async def init_dbconn(database_url):
@@ -38,12 +38,14 @@ class DatabaseConn:
         await self.init_db_if_not_initialised()
         await self.update_db()
 
-    async def create_interview(self, user_id: int, channel_id: int):
+    async def create_interview(
+        self, user_id: int, channel_id: int, welcome_message_id: int
+    ):
         async with self.pool.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
-                    "INSERT INTO interviews (user_id, channel_id) VALUES (%s, %s)",
-                    (user_id, channel_id),
+                    "INSERT INTO interviews (user_id, channel_id, welcome_message) VALUES (%s, %s, %s)",
+                    (user_id, channel_id, welcome_message_id),
                 )
 
     async def get_interview(self, user_id: int):
@@ -70,6 +72,14 @@ class DatabaseConn:
                 await cur.execute(
                     "DELETE FROM interviews WHERE channel_id = %s OR user_id = %s",
                     (user_or_channel_id, user_or_channel_id),
+                )
+
+    async def increment_question(self, question: int, channel_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "UPDATE interviews SET current_question = %s WHERE channel_id = %s",
+                    (question, channel_id),
                 )
 
     # database initialisation functions

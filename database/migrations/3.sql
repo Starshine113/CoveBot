@@ -4,4 +4,4 @@ create table if not exists interview_questions
     question text
 );
 
-update info set schema_version = 2;
+update info set schema_version = 3;
