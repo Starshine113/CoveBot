@@ -263,6 +263,7 @@ class Interviews(commands.Cog):
         await asyncio.sleep(60)
         await archive_message.edit(content="Archiving channel in one minute.")
         await asyncio.sleep(60)
+        await archive_message.delete()
         await self.archive_channel(member, channel)
 
     async def archive_channel(
