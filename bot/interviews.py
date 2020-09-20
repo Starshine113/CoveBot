@@ -33,6 +33,8 @@ class Interviews(commands.Cog):
         self.bot_config = config
         self.logger = logger
         self.archive_in_progress = False
+        self.logger.log(logging.INFO, "Loaded interviews cog")
+        print("Loaded interviews cog")
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
@@ -163,11 +165,11 @@ class Interviews(commands.Cog):
             category=guild.get_channel(self.bot_config["guild"]["interview_category"]),
             reason="Interview: automatic interview channel creation",
         )
-        welcome_message = await self.send_welcome_message(member, channel)
-        await self.conn.create_interview(member.id, channel.id, welcome_message.id)
         self.logger.log(
             logging.INFO, f"Created welcome channel #{channel.name} ({channel.id})"
         )
+        welcome_message = await self.send_welcome_message(member, channel)
+        await self.conn.create_interview(member.id, channel.id, welcome_message.id)
         return channel
 
     @commands.group(aliases=["in"])

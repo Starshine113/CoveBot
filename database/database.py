@@ -20,7 +20,7 @@ import psycopg2
 import aiopg
 
 
-DATABASE_VERSION = 5
+DATABASE_VERSION = 7
 
 
 async def init_dbconn(database_url):
@@ -80,6 +80,60 @@ class DatabaseConn:
                 await cur.execute(
                     "UPDATE interviews SET current_question = %s WHERE channel_id = %s",
                     (question, channel_id),
+                )
+
+    # starboard functions
+
+    async def get_starboard_settings(self):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT * FROM starboard")
+                return await cur.fetchone()
+
+    async def set_starboard_channel(self, channel_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "UPDATE starboard SET channel = %s WHERE id = 1", (channel_id,)
+                )
+
+    async def set_starboard_emoji(self, emoji: str):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "UPDATE starboard SET emoji = %s WHERE id = 1", (emoji,)
+                )
+
+    async def set_starboard_limit(self, limit: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "UPDATE starboard SET star_limit = %s WHERE id = 1", (limit,)
+                )
+
+    async def get_starboard_message(self, message_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT * FROM starboard_messages WHERE message_id = %s",
+                    (message_id,),
+                )
+                return await cur.fetchone()
+
+    async def set_starboard_message(self, message_id: int, starboard_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO starboard_messages (message_id, starboard_id) VALUES (%s, %s)",
+                    (message_id, starboard_id),
+                )
+
+    async def delete_starboard_entry(self, message_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "DELETE FROM starboard_messages WHERE message_id = %s OR starboard_id = %s",
+                    (message_id, message_id),
                 )
 
     # database initialisation functions

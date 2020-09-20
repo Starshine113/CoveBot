@@ -23,7 +23,7 @@ import discord
 from discord.ext import commands
 import tomlkit
 from database import database as botdb
-from bot import interviews
+from bot import interviews, starboard
 
 
 config_file = Path("config.toml")
@@ -71,7 +71,14 @@ async def on_ready():
 
     conn = await botdb.init_dbconn(bot_config["db"]["database_url"])
 
-    bot.add_cog(interviews.Interviews(bot, conn, bot_config, logger))
+    if bot_config["cogs"]["enable_gatekeeper"]:
+        bot.add_cog(interviews.Interviews(bot, conn, bot_config, logger))
+    if bot_config["cogs"]["enable_starboard"]:
+        bot.add_cog(
+            starboard.Starboard(
+                bot, conn, await conn.get_starboard_settings(), bot_config, logger
+            )
+        )
 
     logger.log(logging.INFO, f"Bot ready")
 
