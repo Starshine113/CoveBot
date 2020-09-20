@@ -32,13 +32,13 @@ class Starboard(commands.Cog):
         self.logger.log(logging.INFO, "Loaded starboard cog")
         print("Loaded starboard cog")
 
-    @commands.group(aliases=["sb", "star"])
+    @commands.group(aliases=["sb", "star"], help="Starboard settings")
     @commands.has_permissions(manage_guild=True)
     async def starboard(self, ctx):
         if ctx.invoked_subcommand is None:
             await ctx.send("Invalid subcommand provided.")
 
-    @starboard.command()
+    @starboard.command(help="Get the current starboard settings.")
     async def get(self, ctx):
         channel = ctx.message.guild.get_channel(self.settings[1])
         limit = self.settings[2]
@@ -47,23 +47,28 @@ class Starboard(commands.Cog):
             f"The current starboard channel is <#{channel.id}>.\nThe current emoji for the starboard is {emoji}.\nA message needs {limit} stars to get on <#{channel.id}>."
         )
 
-    @starboard.command()
+    @starboard.command(help="Set the channel where starboard messages are sent.")
     async def channel(self, ctx, channel: discord.TextChannel):
         await self.conn.set_starboard_channel(channel.id)
         self.settings = await self.conn.get_starboard_settings()
         await ctx.send(f"✅ Starboard channel set to {channel.mention}.")
+        self.logger.log(
+            logging.INFO, f"Set starboard channel to #{channel.name} ({channel.id})"
+        )
 
-    @starboard.command()
+    @starboard.command(help="Set the emoji the starboard module will look for.")
     async def emoji(self, ctx, arg: str):
         await self.conn.set_starboard_emoji(arg)
         self.settings = await self.conn.get_starboard_settings()
         await ctx.send(f"✅ Starboard emoji set to {arg}.")
+        self.logger.log(logging.INFO, f"Set starboard emoji to {arg}")
 
-    @starboard.command()
+    @starboard.command(help="Set the emoji limit for messages to get on the starboard.")
     async def limit(self, ctx, limit: int):
         await self.conn.set_starboard_limit(limit)
         self.settings = await self.conn.get_starboard_settings()
         await ctx.send(f"✅ Starboard limit set to {limit}.")
+        self.logger.log(logging.INFO, f"Set starboard limit to {limit}")
 
     @commands.Cog.listener()
     async def on_raw_message_delete(self, payload):
@@ -114,8 +119,12 @@ class Starboard(commands.Cog):
         if starboard:
             starboard_message = await starboard_channel.fetch_message(starboard[1])
             await starboard_message.edit(content=starboard_text, embed=starboard_embed)
+            self.logger.log(
+                logging.INFO, f"Updated starboard message {starboard_message.id}"
+            )
         else:
             starboard_message = await starboard_channel.send(
                 content=starboard_text, embed=starboard_embed
             )
             await self.conn.set_starboard_message(message.id, starboard_message.id)
+            self.logger.log(logging.INFO, f"Created starboard message for {message.id}")

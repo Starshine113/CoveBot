@@ -23,7 +23,7 @@ import discord
 from discord.ext import commands
 import tomlkit
 from database import database as botdb
-from bot import interviews, starboard
+from bot import interviews, starboard, user_commands, notes
 
 
 config_file = Path("config.toml")
@@ -57,6 +57,11 @@ bot = commands.AutoShardedBot(
 
 
 @bot.event
+async def on_connect():
+    await bot.change_presence(status=discord.Status.idle)
+
+
+@bot.event
 async def on_ready():
     print("Logged in as")
     print(bot.user.name)
@@ -67,20 +72,25 @@ async def on_ready():
 
     activity = "{}help".format(bot_config["bot"]["prefixes"][0])
 
-    await bot.change_presence(activity=discord.Game(name=activity))
-
     conn = await botdb.init_dbconn(bot_config["db"]["database_url"])
 
+    if bot_config["cogs"]["enable_user_commands"]:
+        bot.add_cog(user_commands.UserCommands(bot, conn, logger))
     if bot_config["cogs"]["enable_gatekeeper"]:
         bot.add_cog(interviews.Interviews(bot, conn, bot_config, logger))
+    if bot_config["cogs"]["enable_notes"]:
+        bot.add_cog(notes.Notes(bot, conn, logger))
     if bot_config["cogs"]["enable_starboard"]:
         bot.add_cog(
             starboard.Starboard(
                 bot, conn, await conn.get_starboard_settings(), bot_config, logger
             )
         )
-
     logger.log(logging.INFO, f"Bot ready")
+
+    await bot.change_presence(
+        status=discord.Status.online, activity=discord.Game(name=activity)
+    )
 
 
 bot.run(bot_config["bot"]["token"])

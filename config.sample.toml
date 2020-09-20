@@ -4,6 +4,12 @@ prefixes = ["c!", "c;", "--"]
 # bot token
 token = 'fancydiscordstring'
 
+[cogs]
+enable_user_commands = true
+enable_starboard = true
+enable_gatekeeper = true
+enable_notes = true
+
 [guild]
 # id of the guild the bot will operate in
 guild_id = 0

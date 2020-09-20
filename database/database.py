@@ -136,6 +136,27 @@ class DatabaseConn:
                     (message_id, message_id),
                 )
 
+    # note functions
+
+    async def add_note(self, user_id: int, added_by: int, note: str):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO notes (user_id, set_by, reason) VALUES (%s, %s, %s)",
+                    (user_id, added_by, note),
+                )
+
+    async def del_note(self, note_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("DELETE FROM notes WHERE id = %s", (note_id,))
+
+    async def list_notes(self, user_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT * FROM notes WHERE user_id = %s", (user_id,))
+                return await cur.fetchall()
+
     # database initialisation functions
 
     async def init_db_if_not_initialised(self):

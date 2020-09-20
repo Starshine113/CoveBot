@@ -172,13 +172,13 @@ class Interviews(commands.Cog):
         await self.conn.create_interview(member.id, channel.id, welcome_message.id)
         return channel
 
-    @commands.group(aliases=["in"])
+    @commands.group(aliases=["in"], help="Interview commands")
     @commands.has_permissions(manage_guild=True)
     async def interview(self, ctx):
         if ctx.invoked_subcommand is None:
             await ctx.send("Invalid subcommand provided.")
 
-    @interview.command()
+    @interview.command(help="Manually create an interview channel for a user.")
     async def create(self, ctx, member: discord.Member):
         if member.guild.id == self.bot_config["guild"]["guild_id"]:
             await member.add_roles(
@@ -191,7 +191,7 @@ class Interviews(commands.Cog):
                 message += f"\nCreated interview channel {channel.mention}."
             await ctx.send(message)
 
-    @interview.command()
+    @interview.command(help="Approve a user.")
     async def approve(self, ctx):
         interview = await self.conn.get_interview_from_channel(ctx.message.channel.id)
         if interview:
@@ -223,7 +223,7 @@ class Interviews(commands.Cog):
             )
             await self.queue_channel_deletion(ctx.message.channel, member, False)
 
-    @interview.command()
+    @interview.command(help="Deny a user.")
     async def deny(self, ctx):
         interview = await self.conn.get_interview_from_channel(ctx.message.channel.id)
         if interview:
@@ -234,7 +234,10 @@ class Interviews(commands.Cog):
             await self.queue_channel_deletion(ctx.message.channel, member, True)
             await asyncio.sleep(150)
 
-    @interview.command(name="manual-archive")
+    @interview.command(
+        name="manual-archive",
+        help="Manually archive the channel, in case a user was let in without going through CoveBot.",
+    )
     async def manual_archive(self, ctx):
         interview = await self.conn.get_interview_from_channel(ctx.message.channel.id)
         if interview:
