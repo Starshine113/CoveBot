@@ -65,6 +65,12 @@ async def on_connect():
 
 
 @bot.event
+async def on_disconnect():
+    for cog in bot.cogs:
+        bot.remove_cog(cog[0])
+
+
+@bot.event
 async def on_ready():
     print("Logged in as")
     print(bot.user.name)
