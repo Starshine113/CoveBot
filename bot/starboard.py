@@ -136,6 +136,7 @@ class Starboard(commands.Cog):
         starboard_text = f"**{count}** {self.settings[3]} <#{message.channel.id}>"
         starboard_embed = discord.Embed(
             description=message.content,
+            colour=discord.Colour(0xF8E71C),
             timestamp=message.created_at,
         )
         starboard_embed.set_author(
@@ -165,6 +166,7 @@ class Starboard(commands.Cog):
             self.logger.log(logging.INFO, f"Created starboard message for {message.id}")
 
     @starboard.group(aliases=["bl"], help="Manage the channel blacklist.")
+    @commands.has_permissions(manage_guild=True)
     async def blacklist(self, ctx):
         if ctx.invoked_subcommand is None:
             blacklist = await self.conn.get_blacklist()

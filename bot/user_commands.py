@@ -18,6 +18,7 @@
 
 import logging
 import re
+import typing
 import discord
 from discord.ext import commands
 
@@ -54,6 +55,7 @@ class UserCommands(commands.Cog):
     async def about(self, ctx):
         embed = discord.Embed(
             title="About CoveBotn't",
+            colour=discord.Colour(0xF8E71C),
             description="CoveBotn't is a general purpose custom bot for the Cove. It currently handles the starboard and moderation notes.",
         )
         embed.set_footer(
@@ -65,3 +67,13 @@ class UserCommands(commands.Cog):
             inline=False,
         )
         await ctx.send(embed=embed)
+
+    @commands.command(help="Say something in a channel", aliases=["say"])
+    @commands.has_permissions(manage_guild=True)
+    async def echo(
+        self, ctx, channel: typing.Optional[discord.TextChannel], *, args: str
+    ):
+        if channel:
+            await channel.send(args)
+        else:
+            await ctx.send(args)
