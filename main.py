@@ -49,7 +49,7 @@ logger.addHandler(handler)
 
 description = "General-purpose moderation bot for the Cove"
 
-bot = commands.AutoShardedBot(
+bot = commands.Bot(
     command_prefix=commands.when_mentioned_or(*bot_config["bot"]["prefixes"]),
     description=description,
     case_insensitive=True,

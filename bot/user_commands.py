@@ -71,9 +71,15 @@ class UserCommands(commands.Cog):
     @commands.command(help="Say something in a channel", aliases=["say"])
     @commands.has_permissions(manage_guild=True)
     async def echo(
-        self, ctx, channel: typing.Optional[discord.TextChannel], *, args: str
+        self, ctx, channel: typing.Optional[discord.TextChannel], *, args=None
     ):
-        if channel:
-            await channel.send(args)
+        if ctx.message.attachments:
+            attachments = []
+            for attachment in ctx.message.attachments:
+                attachments.append(await attachment.to_file())
         else:
-            await ctx.send(args)
+            attachments = None
+        if channel:
+            await channel.send(content=args, files=attachments)
+        else:
+            await ctx.send(content=args, files=attachments)
