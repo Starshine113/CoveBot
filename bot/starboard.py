@@ -95,8 +95,42 @@ class Starboard(commands.Cog):
                                 message, member.guild, reaction.count
                             )
 
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload):
+        guild = self.bot.get_guild(payload.guild_id)
+        if guild.id == self.bot_config["guild"]["guild_id"]:
+            channel = guild.get_channel(payload.channel_id)
+            message = await channel.fetch_message(payload.message_id)
+            member = guild.get_member(payload.user_id)
+            if (
+                str(payload.emoji) == self.settings[3]
+                and not payload.channel_id == self.settings[3]
+                and await self.conn.channel_not_blacklisted(payload.channel_id)
+            ):
+                if message.author == member:
+                    pass
+                else:
+                    for reaction in message.reactions:
+                        if str(reaction.emoji) == self.settings[3]:
+                            if reaction.count < self.settings[2]:
+                                await self.delete_starboard_message(message, guild)
+                            else:
+                                await self.create_or_edit_starboard_message(
+                                    message, guild, reaction.count
+                                )
+
+    async def delete_starboard_message(
+        self, message: discord.Message, guild: discord.Guild
+    ):
+        starboard_channel = guild.get_channel(self.settings[1])
+        starboard = await self.conn.get_starboard_message(message.id)
+        if starboard:
+            starboard_message = await starboard_channel.fetch_message(starboard[1])
+            await starboard_message.delete()
+            await self.conn.delete_starboard_entry(message.id)
+
     async def create_or_edit_starboard_message(
-        self, message: discord.Member, guild: discord.Guild, count: int
+        self, message: discord.Message, guild: discord.Guild, count: int
     ):
         starboard_channel = guild.get_channel(self.settings[1])
         starboard_text = f"**{count}** {self.settings[3]} <#{message.channel.id}>"
