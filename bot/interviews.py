@@ -67,7 +67,7 @@ class Interviews(commands.Cog):
                 f"A new member joined {member.guild.name}: {member.name}#{member.discriminator} ({member.id})",
             )
             await member.add_roles(
-                member.guild.get_role(self.bot_config["guild"]["gatekeeper_role"]),
+                member.guild.get_role(self.bot_config["gatekeeper"]["gatekeeper_role"]),
                 reason="Interview: add gatekeeper role",
             )
             if not await self.conn.get_interview(member.id):
@@ -107,7 +107,7 @@ class Interviews(commands.Cog):
                 await message.remove_reaction("👍", payload.member)
 
     async def send_next_question(self, interview, channel: discord.TextChannel):
-        questions = self.bot_config["guild"]["interview_questions"]
+        questions = self.bot_config["gatekeeper"]["advanced"]["interview_questions"]
         if interview[2] < len(questions):
             self.logger.log(
                 logging.INFO,
@@ -150,12 +150,14 @@ class Interviews(commands.Cog):
             overwrites[guild.get_role(role)] = discord.PermissionOverwrite(
                 read_messages=True, manage_messages=False
             )
-        if self.bot_config["guild"]["everyone_can_see_interviews"]:
+        if self.bot_config["gatekeeper"]["advanced"]["everyone_can_see_interviews"]:
             overwrites[guild.default_role] = discord.PermissionOverwrite(
                 send_messages=False, add_reactions=False
             )
             overwrites[
-                guild.get_role(self.bot_config["guild"]["hide_interview_role"])
+                guild.get_role(
+                    self.bot_config["gatekeeper"]["advanced"]["hide_interview_role"]
+                )
             ] = discord.PermissionOverwrite(read_messages=False)
         else:
             overwrites[guild.default_role] = discord.PermissionOverwrite(
@@ -164,7 +166,9 @@ class Interviews(commands.Cog):
         channel = await guild.create_text_channel(
             channel_name,
             overwrites=overwrites,
-            category=guild.get_channel(self.bot_config["guild"]["interview_category"]),
+            category=guild.get_channel(
+                self.bot_config["gatekeeper"]["advanced"]["interview_category"]
+            ),
             reason="Interview: automatic interview channel creation",
         )
         self.logger.log(
@@ -184,7 +188,7 @@ class Interviews(commands.Cog):
     async def create(self, ctx, member: discord.Member):
         if member.guild.id == self.bot_config["guild"]["guild_id"]:
             await member.add_roles(
-                member.guild.get_role(self.bot_config["guild"]["gatekeeper_role"]),
+                member.guild.get_role(self.bot_config["gatekeeper"]["gatekeeper_role"]),
                 reason="Interview: add gatekeeper role",
             )
             message = f"Added the gatekeeper role to {member.mention}."
@@ -200,22 +204,22 @@ class Interviews(commands.Cog):
             member = ctx.message.author.guild.get_member(interview[0])
             await member.add_roles(
                 ctx.message.author.guild.get_role(
-                    self.bot_config["guild"]["member_role"]
+                    self.bot_config["gatekeeper"]["member_role"]
                 ),
                 reason="Interview: approved",
             )
             await member.remove_roles(
                 ctx.message.author.guild.get_role(
-                    self.bot_config["guild"]["gatekeeper_role"]
+                    self.bot_config["gatekeeper"]["gatekeeper_role"]
                 ),
                 reason="Interview: approved",
             )
             await ctx.send(f"Welcome to the server, {member.mention}!")
             welcome_channel = member.guild.get_channel(
-                self.bot_config["guild"]["welcome_channel"]
+                self.bot_config["gatekeeper"]["welcome_channel"]
             )
             await welcome_channel.send(
-                self.bot_config["guild"]["welcome_message"].format(
+                self.bot_config["gatekeeper"]["welcome_message"].format(
                     guild=member.guild.name, mention=member.mention
                 )
             )
@@ -293,7 +297,7 @@ class Interviews(commands.Cog):
     async def send_initial_webhook_message(self, member: discord.Member):
         async with aiohttp.ClientSession() as session:
             webhook = discord.Webhook.from_url(
-                self.bot_config["guild"]["log_webhook"],
+                self.bot_config["gatekeeper"]["advanced"]["log_webhook"],
                 adapter=discord.AsyncWebhookAdapter(session),
             )
             embed = discord.Embed(title=f"Interview with {member.display_name}")
@@ -309,7 +313,7 @@ class Interviews(commands.Cog):
     async def send_webhook_message(self, message: discord.Message):
         async with aiohttp.ClientSession() as session:
             webhook = discord.Webhook.from_url(
-                self.bot_config["guild"]["log_webhook"],
+                self.bot_config["gatekeeper"]["advanced"]["log_webhook"],
                 adapter=discord.AsyncWebhookAdapter(session),
             )
             await webhook.send(

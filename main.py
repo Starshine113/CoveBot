@@ -23,7 +23,7 @@ import discord
 from discord.ext import commands
 import tomlkit
 from database import database as botdb
-from bot import interviews, starboard, user_commands, notes
+from bot import interviews, starboard, user_commands, notes, gatekeeper
 
 
 config_file = Path("config.toml")
@@ -36,7 +36,7 @@ if not config_file.is_file():
 bot_config = tomlkit.parse(config_file.read_text())
 
 if os.environ.get("COVEBOT_DATABASE"):
-    bot_config["db"]["database_url"] = os.environ.get("COVEBOT_DATABASE")
+    bot_config["bot"]["database_url"] = os.environ.get("COVEBOT_DATABASE")
 
 
 logger = logging.getLogger("discord")
@@ -81,12 +81,14 @@ async def on_ready():
 
     activity = "{}help".format(bot_config["bot"]["prefixes"][0])
 
-    conn = await botdb.init_dbconn(bot_config["db"]["database_url"])
+    conn = await botdb.init_dbconn(bot_config["bot"]["database_url"])
 
     if bot_config["cogs"]["enable_user_commands"]:
         bot.add_cog(user_commands.UserCommands(bot, conn, logger))
-    if bot_config["cogs"]["enable_gatekeeper"]:
+    if bot_config["cogs"]["enable_advanced_gatekeeper"]:
         bot.add_cog(interviews.Interviews(bot, conn, bot_config, logger))
+    elif bot_config["cogs"]["enable_simple_gatekeeper"]:
+        bot.add_cog(gatekeeper.SimpleGatekeeper(bot, conn, bot_config, logger))
     if bot_config["cogs"]["enable_notes"]:
         bot.add_cog(notes.Notes(bot, conn, logger))
     if bot_config["cogs"]["enable_starboard"]:

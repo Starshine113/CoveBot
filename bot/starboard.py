@@ -195,9 +195,7 @@ class Starboard(commands.Cog):
         for channel in channels:
             if not channel in current_blacklist:
                 await self.conn.add_to_blacklist(channel)
-                message += (
-                    "✅ Channel <#" + str(channel) + "> added to command blacklist.\n"
-                )
+                message += "✅ Channel <#" + str(channel) + "> added to the blacklist.\n"
             else:
                 message += (
                     "⚠ Channel <#"

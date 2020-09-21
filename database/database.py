@@ -20,7 +20,7 @@ import psycopg2
 import aiopg
 
 
-DATABASE_VERSION = 8
+DATABASE_VERSION = 9
 
 
 async def init_dbconn(database_url):
