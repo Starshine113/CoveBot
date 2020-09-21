@@ -47,3 +47,21 @@ class UserCommands(commands.Cog):
     @commands.cooldown(1, 3, commands.BucketType.channel)
     async def ping(self, ctx):
         await ctx.send("Pong! Latency: {}ms".format(round(self.bot.latency * 1000, 2)))
+
+    # this should be part of the help command eventually but we're l a z y and can't be bothered to figure that out yet
+    @commands.command(help="Show some info about the bot.")
+    @commands.cooldown(1, 3, commands.BucketType.channel)
+    async def about(self, ctx):
+        embed = discord.Embed(
+            title="About CoveBotn't",
+            description="CoveBotn't is a general purpose custom bot for the Cove. It currently handles the starboard and moderation notes.",
+        )
+        embed.set_footer(
+            text="Created by Starshine System (Starshine ☀✨#5000) | CoveBotn't v0.5"
+        )
+        embed.add_field(
+            name="Source code",
+            value="The source code can be found [here](https://github.com/Starshine113/CoveBot/).",
+            inline=False,
+        )
+        await ctx.send(embed=embed)
