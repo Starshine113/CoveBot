@@ -80,6 +80,7 @@ class Starboard(commands.Cog):
             payload.guild_id == self.bot_config["guild"]["guild_id"]
             and str(payload.emoji) == self.settings[3]
             and not payload.channel_id == self.settings[1]
+            and await self.conn.channel_not_blacklisted(payload.channel_id)
         ):
             member = payload.member
             channel = member.guild.get_channel(payload.channel_id)
@@ -98,7 +99,7 @@ class Starboard(commands.Cog):
         self, message: discord.Member, guild: discord.Guild, count: int
     ):
         starboard_channel = guild.get_channel(self.settings[1])
-        starboard_text = f"{count} {self.settings[3]} <#{message.channel.id}>"
+        starboard_text = f"**{count}** {self.settings[3]} <#{message.channel.id}>"
         starboard_embed = discord.Embed(
             description=message.content,
             timestamp=message.created_at,
@@ -128,3 +129,74 @@ class Starboard(commands.Cog):
             )
             await self.conn.set_starboard_message(message.id, starboard_message.id)
             self.logger.log(logging.INFO, f"Created starboard message for {message.id}")
+
+    @starboard.group(aliases=["bl"], help="Manage the channel blacklist.")
+    async def blacklist(self, ctx):
+        if ctx.invoked_subcommand is None:
+            blacklist = await self.conn.get_blacklist()
+            blacklist_message = ""
+            for channel in blacklist:
+                blacklist_message += "<#" + str(channel) + ">\n"
+            if blacklist_message == "":
+                blacklist_message = "No channels are blacklisted.\n(Use `{}guild blacklist add` to disable commands in a given channel)".format(
+                    ctx.prefix
+                )
+            else:
+                blacklist_message += "\nTo remove channels from the blacklist, use `{}starboard blacklist remove`.".format(
+                    ctx.prefix
+                )
+            embed = discord.Embed(
+                title="Starboard blacklist",
+                description=blacklist_message,
+            )
+            await ctx.send(embed=embed)
+
+    @blacklist.command(help="Add channel(s) to the blacklist.")
+    async def add(self, ctx, *args):
+        current_blacklist = await self.conn.get_blacklist()
+        channels = await self.get_channel_ids(args)
+        message = ""
+        for channel in channels:
+            if not channel in current_blacklist:
+                await self.conn.add_to_blacklist(channel)
+                message += (
+                    "✅ Channel <#" + str(channel) + "> added to command blacklist.\n"
+                )
+            else:
+                message += (
+                    "⚠ Channel <#"
+                    + str(channel)
+                    + "> is already on the blacklist. Use `"
+                    + ctx.prefix
+                    + "starboard blacklist remove` to remove it from the blacklist.\n"
+                )
+        await ctx.send(message)
+
+    @blacklist.command(help="Remove channel(s) from the blacklist.")
+    async def remove(self, ctx, *args):
+        current_blacklist = await self.conn.get_blacklist()
+        channels = await self.get_channel_ids(args)
+        message = ""
+        for channel in channels:
+            if channel in current_blacklist:
+                await self.conn.remove_from_blacklist(channel)
+                message += (
+                    "✅ Channel <#" + str(channel) + "> removed from the blacklist.\n"
+                )
+            else:
+                message += (
+                    "⚠ Channel <#"
+                    + str(channel)
+                    + "> is not blacklisted. Use `"
+                    + ctx.prefix
+                    + "starboard blacklist add` to add it to the blacklist.\n"
+                )
+        await ctx.send(message)
+
+    async def get_channel_ids(self, args):
+        channels = []
+        for item in args:
+            m = re.search(r"<#(?P<ID>\d{3,25})>", item)
+            channel = m.group("ID")
+            channels.append(int(channel))
+        return channels

@@ -46,13 +46,13 @@ class Interviews(commands.Cog):
             pass
         elif isinstance(error, commands.CommandNotFound):
             await ctx.send("Command not found!")
-        else:  # for debugging purposes, probably very insecure for production
+        else:
             error_id = str(uuid.uuid4())
             self.logger.log(
                 logging.WARN, "Internal error occurred ({}): {}".format(error_id, error)
             )
             await ctx.send(
-                "❌ Internal error occurred! Please join the support server and send the developer this ID: `{}`".format(
+                "❌ Internal error occurred! Please send the developer this ID: `{}`".format(
                     error_id
                 )
             )

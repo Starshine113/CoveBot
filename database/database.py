@@ -20,7 +20,7 @@ import psycopg2
 import aiopg
 
 
-DATABASE_VERSION = 7
+DATABASE_VERSION = 8
 
 
 async def init_dbconn(database_url):
@@ -156,6 +156,39 @@ class DatabaseConn:
             async with conn.cursor() as cur:
                 await cur.execute("SELECT * FROM notes WHERE user_id = %s", (user_id,))
                 return await cur.fetchall()
+
+    # blacklist functions
+
+    async def add_to_blacklist(self, channel):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO blacklisted_channels (channel_id) VALUES (%s)",
+                    (channel,),
+                )
+
+    async def remove_from_blacklist(self, channel):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "DELETE FROM blacklisted_channels WHERE channel_id = %s",
+                    (int(channel),),
+                )
+
+    async def get_blacklist(self):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT channel_id FROM blacklisted_channels")
+                channels = await cur.fetchall()
+                channel_list = []
+                for channel in channels:
+                    channel_list.append(channel[0])
+
+                return channel_list
+
+    async def channel_not_blacklisted(self, channel_id: int):
+        blacklist = await self.get_blacklist()
+        return channel_id not in blacklist
 
     # database initialisation functions
 
