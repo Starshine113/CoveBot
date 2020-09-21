@@ -46,6 +46,8 @@ class Interviews(commands.Cog):
             pass
         elif isinstance(error, commands.CommandNotFound):
             await ctx.send("Command not found!")
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send("You are missing a required argument.")
         else:
             error_id = str(uuid.uuid4())
             self.logger.log(

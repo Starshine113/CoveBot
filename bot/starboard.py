@@ -138,7 +138,7 @@ class Starboard(commands.Cog):
             for channel in blacklist:
                 blacklist_message += "<#" + str(channel) + ">\n"
             if blacklist_message == "":
-                blacklist_message = "No channels are blacklisted.\n(Use `{}guild blacklist add` to disable commands in a given channel)".format(
+                blacklist_message = "No channels are blacklisted.\n(Use `{}starboard blacklist add` to disable commands in a given channel)".format(
                     ctx.prefix
                 )
             else:
