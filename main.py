@@ -58,7 +58,10 @@ bot = commands.AutoShardedBot(
 
 @bot.event
 async def on_connect():
-    await bot.change_presence(status=discord.Status.idle)
+    await bot.change_presence(
+        status=discord.Status.idle,
+        activity=discord.Game(name="Starting... (please wait)"),
+    )
 
 
 @bot.event
