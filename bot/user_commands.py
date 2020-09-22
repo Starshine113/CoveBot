@@ -32,6 +32,14 @@ class UserCommands(commands.Cog):
         self.logger.log(logging.INFO, "Loaded commands cog")
         print("Loaded commands cog")
 
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        if isinstance(error, commands.MissingPermissions):
+            perms = ", ".join(error.missing_perms)
+            await ctx.send(
+                f"❌ **Error:** You are missing the required permissions to run this command.\nRequired permissions: `{perms}`"
+            )
+
     @commands.command(help="Enlarge any custom emoji.")
     @commands.cooldown(1, 3, commands.BucketType.channel)
     async def enlarge(self, ctx, emoji_str: str):
