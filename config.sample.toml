@@ -5,6 +5,8 @@ prefixes = ["--", ""c!", "c;"]
 token = 'fancydiscordstring'
 # url to postgres database
 database_url = "postgresql://covebot:covebot@localhost/covebot"
+# logging level -- INFO, WARN, or ERROR
+logging_level = "INFO"
 
 [cogs]
 # enable user commands (--enlarge, --ping, --echo)
