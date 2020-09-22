@@ -162,16 +162,17 @@ class UserCommands(commands.Cog):
             timestamp=role.created_at,
         )
         embed.set_footer(text="Created at")
-        embed.add_field(name="Name", value=role.name, inline=True)
+        embed.add_field(name="Name", value=role.name, inline=False)
         embed.add_field(name="ID", value=role.id, inline=True)
         embed.add_field(name="Position", value=role.position, inline=True)
+        embed.add_field(name="Hoisted", value=role.hoist, inline=True)
         embed.add_field(name="Mentionable", value=str(role.mentionable), inline=True)
         embed.add_field(name="Colour", value=str(role.colour), inline=True)
         embed.add_field(name="Members", value=str(len(role.members)), inline=True)
         embed.add_field(
             name="Created",
             value=f"{role.created_at.strftime('%Y-%m-%d %H:%M:%S')} UTC",
-            inline=False,
+            inline=True,
         )
 
         await ctx.send(embed=embed)
