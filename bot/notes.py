@@ -38,21 +38,28 @@ class Notes(commands.Cog):
         ctx,
         member: typing.Union[discord.Member, discord.User],
         *,
-        note: str,
+        reason: str,
     ):
         current_notes = await self.conn.list_notes(member.id)
         if len(current_notes) >= 25:
             await ctx.send(
                 "This user has too many notes! A user can have up to 25 notes at any given time."
             )
-        elif len(note) > 200:
+        elif len(reason) > 200:
             await ctx.send(
-                f"Note too long! A note can be up to 200 characters, this note is {len(note)} characters."
+                f"Note too long! A note can be up to 200 characters, this note is {len(reason)} characters."
             )
         else:
-            await self.conn.add_note(member.id, ctx.author.id, note)
-            await ctx.send(f"✅ Note taken.\n**Note:** {note}")
+            await self.conn.add_note(member.id, ctx.author.id, reason)
+            await ctx.send(f"✅ Note taken.\n**Note:** {reason}")
             self.logger.log(logging.INFO, "Added note")
+
+    @set_note.error
+    async def set_note_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send(
+                f"```{ctx.prefix}setnote <user: Member> <reason: str>```\nError: missing required parameter `{error.param.name}`"
+            )
 
     @commands.command(name="delnote", help="Delete a note by ID.")
     @commands.has_permissions(manage_messages=True)
@@ -61,9 +68,22 @@ class Notes(commands.Cog):
         await ctx.send(f"✅ Deleted note #{note}.")
         self.logger.log(logging.INFO, "Deleted note")
 
+    @del_note.error
+    async def del_note_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send(
+                f"```{ctx.prefix}delnote <note: int>```\nError: missing required argument `{error.param.name}`"
+            )
+
     @commands.command(help="List all notes for a user.")
     @commands.has_permissions(manage_messages=True)
-    async def notes(self, ctx, member: typing.Union[discord.Member, discord.User]):
+    async def notes(
+        self,
+        ctx,
+        member: typing.Optional[typing.Union[discord.Member, discord.User]] = None,
+    ):
+        if not member:
+            member = ctx.author
         notes = await self.conn.list_notes(member.id)
         embed = discord.Embed(timestamp=datetime.utcnow(), title="Notes")
         embed.set_author(name=str(member), icon_url=str(member.avatar_url))

@@ -114,13 +114,13 @@ class UserCommands(commands.Cog):
                 roles_string = "Too many to list"
             embed.add_field(name="Roles", value=roles_string, inline=True)
         if isinstance(member, discord.Member):
-            if member.status == discord.Status.online:
+            if member.status is discord.Status.online:
                 status = "online"
             elif member.status is discord.Status.idle:
                 status = "idle"
-            elif isinstance(member.status, discord.Status.do_not_disturb):
+            elif member.status is discord.Status.do_not_disturb:
                 status = "do not disturb"
-            elif isinstance(member.status, discord.Status.offline):
+            elif member.status is discord.Status.offline:
                 status = "offline"
             elif isinstance(member.status, str):
                 status = member.status
