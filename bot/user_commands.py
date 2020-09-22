@@ -196,3 +196,12 @@ class UserCommands(commands.Cog):
         )
 
         await ctx.send(embed=embed)
+
+    @commands.command(name="setstatus")
+    @commands.is_owner()
+    async def set_status(self, ctx, *, args: str):
+        await self.bot.change_presence(
+            status=discord.Status.idle,
+            activity=discord.Game(name=args),
+        )
+        await ctx.send("Changed presence")
