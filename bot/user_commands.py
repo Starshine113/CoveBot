@@ -90,6 +90,7 @@ class UserCommands(commands.Cog):
     async def info(
         self,
         ctx,
+        *,
         member: typing.Optional[typing.Union[discord.Member, discord.User]] = None,
     ):
         if not member:
@@ -125,12 +126,12 @@ class UserCommands(commands.Cog):
             embed.add_field(name="Nickname", value=member.display_name, inline=True)
 
         created_delta = datetime.datetime.utcnow() - member.created_at
-        created_string = f"{member.created_at.strftime('%Y-%m-%d %H:%M')} UTC ({created_delta.days} days ago)"
+        created_string = f"{member.created_at.strftime('%Y-%m-%d %H:%M:%S')} UTC ({created_delta.days} days ago)"
 
         embed.add_field(name="Created", value=created_string, inline=True)
         if isinstance(member, discord.Member):
             joined_delta = datetime.datetime.utcnow() - member.joined_at
-            joined_string = f"{member.created_at.strftime('%Y-%m-%d %H:%M')} UTC ({joined_delta.days} days ago)"
+            joined_string = f"{member.created_at.strftime('%Y-%m-%d %H:%M:%S')} UTC ({joined_delta.days} days ago)"
             embed.add_field(name="Joined", value=joined_string, inline=True)
 
         if isinstance(member, discord.Member):
@@ -144,5 +145,33 @@ class UserCommands(commands.Cog):
             embed.add_field(
                 name=f"Roles ({len(roles)})", value=roles_string, inline=False
             )
+
+        await ctx.send(embed=embed)
+
+    @commands.command(
+        name="roleinfo", help="Get information about a role", aliases=["role-info"]
+    )
+    @commands.cooldown(1, 1, commands.BucketType.channel)
+    async def role_info(self, ctx, *, role: typing.Optional[discord.Role] = None):
+        if not role:
+            role = ctx.guild.default_role
+        embed = discord.Embed(
+            title=f"Role info: {role.name}",
+            colour=role.colour,
+            description=f"`<@&{role.id}>`",
+            timestamp=role.created_at,
+        )
+        embed.set_footer(text="Created at")
+        embed.add_field(name="Name", value=role.name, inline=True)
+        embed.add_field(name="ID", value=role.id, inline=True)
+        embed.add_field(name="Position", value=role.position, inline=True)
+        embed.add_field(name="Mentionable", value=str(role.mentionable), inline=True)
+        embed.add_field(name="Colour", value=str(role.colour), inline=True)
+        embed.add_field(name="Members", value=str(len(role.members)), inline=True)
+        embed.add_field(
+            name="Created",
+            value=f"{role.created_at.strftime('%Y-%m-%d %H:%M:%S')} UTC",
+            inline=False,
+        )
 
         await ctx.send(embed=embed)
