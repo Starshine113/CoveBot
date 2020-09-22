@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import datetime
 import logging
 import re
 import typing
@@ -103,7 +104,7 @@ class UserCommands(commands.Cog):
         embed.set_footer(text=f"User ID: {member.id}")
         if isinstance(member, discord.Member):
             embed.add_field(
-                name="Highest Rank", value=str(member.roles[-1]), inline=True
+                name="Highest Rank", value=str(member.top_role), inline=True
             )
             roles = []
             for role in member.roles[1:]:
@@ -131,8 +132,13 @@ class UserCommands(commands.Cog):
         if isinstance(member, discord.Member):
             embed.add_field(name="Nickname", value=member.display_name, inline=True)
 
-        embed.add_field(name="Created", value=member.created_at, inline=True)
+        created_delta = datetime.datetime.utcnow() - member.created_at
+        created_string = f"{member.created_at.strftime('%Y-%m-%d %H:%M')} UTC ({created_delta.days} days ago)"
+
+        embed.add_field(name="Created", value=created_string, inline=True)
         if isinstance(member, discord.Member):
-            embed.add_field(name="Joined", value=member.joined_at, inline=True)
+            joined_delta = datetime.datetime.utcnow() - member.joined_at
+            joined_string = f"{member.created_at.strftime('%Y-%m-%d %H:%M')} UTC ({joined_delta.days} days ago)"
+            embed.add_field(name="Joined", value=joined_string, inline=True)
 
         await ctx.send(embed=embed)
