@@ -106,14 +106,6 @@ class UserCommands(commands.Cog):
             embed.add_field(
                 name="Highest Rank", value=str(member.top_role), inline=True
             )
-            roles = []
-            for role in member.roles[1:]:
-                roles.append(role.mention)
-            roles.reverse()
-            roles_string = " ".join(roles)
-            if len(roles_string) >= 500:
-                roles_string = "Too many to list"
-            embed.add_field(name="Roles", value=roles_string, inline=True)
         if isinstance(member, discord.Member):
             if member.status is discord.Status.online:
                 status = "online"
@@ -140,5 +132,17 @@ class UserCommands(commands.Cog):
             joined_delta = datetime.datetime.utcnow() - member.joined_at
             joined_string = f"{member.created_at.strftime('%Y-%m-%d %H:%M')} UTC ({joined_delta.days} days ago)"
             embed.add_field(name="Joined", value=joined_string, inline=True)
+
+        if isinstance(member, discord.Member):
+            roles = []
+            for role in member.roles[1:]:
+                roles.append(role.mention)
+            roles.reverse()
+            roles_string = " ".join(roles)
+            if len(roles_string) >= 1000:
+                roles_string = "Too many to list"
+            embed.add_field(
+                name=f"Roles ({len(roles)})", value=roles_string, inline=False
+            )
 
         await ctx.send(embed=embed)
