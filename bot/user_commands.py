@@ -89,9 +89,21 @@ class UserCommands(commands.Cog):
         else:
             attachments = None
         if channel:
-            await channel.send(content=args, files=attachments)
+            await channel.send(
+                content=args,
+                files=attachments,
+                allowed_mentions=discord.AllowedMentions(
+                    everyone=False, users=False, roles=False
+                ),
+            )
         else:
-            await ctx.send(content=args, files=attachments)
+            await ctx.send(
+                content=args,
+                files=attachments,
+                allowed_mentions=discord.AllowedMentions(
+                    everyone=False, users=False, roles=False
+                ),
+            )
 
     @commands.command(help="Get information about a user", aliases=["i", "profile"])
     @commands.cooldown(1, 1, commands.BucketType.channel)
@@ -139,7 +151,7 @@ class UserCommands(commands.Cog):
         embed.add_field(name="Created", value=created_string, inline=True)
         if isinstance(member, discord.Member):
             joined_delta = datetime.datetime.utcnow() - member.joined_at
-            joined_string = f"{member.created_at.strftime('%Y-%m-%d %H:%M:%S')} UTC ({joined_delta.days} days ago)"
+            joined_string = f"{member.joined_at.strftime('%Y-%m-%d %H:%M:%S')} UTC ({joined_delta.days} days ago)"
             embed.add_field(name="Joined", value=joined_string, inline=True)
 
         if isinstance(member, discord.Member):
