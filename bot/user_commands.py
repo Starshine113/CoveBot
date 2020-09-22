@@ -110,7 +110,7 @@ class UserCommands(commands.Cog):
                 roles.append(role.mention)
             roles.reverse()
             roles_string = " ".join(roles)
-            if len(roles_string) >= 1000:
+            if len(roles_string) >= 500:
                 roles_string = "Too many to list"
             embed.add_field(name="Roles", value=roles_string, inline=True)
         if isinstance(member, discord.Member):
