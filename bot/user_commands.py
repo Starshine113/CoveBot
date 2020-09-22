@@ -83,3 +83,56 @@ class UserCommands(commands.Cog):
             await channel.send(content=args, files=attachments)
         else:
             await ctx.send(content=args, files=attachments)
+
+    @commands.command(help="Get information about a user", aliases=["i", "profile"])
+    @commands.cooldown(1, 1, commands.BucketType.channel)
+    async def info(
+        self,
+        ctx,
+        member: typing.Optional[typing.Union[discord.Member, discord.User]] = None,
+    ):
+        if not member:
+            member = ctx.author
+
+        embed = discord.Embed(
+            description=f"User data for {member.mention}:",
+            colour=discord.Colour(0xF8E71C),
+        )
+        embed.set_author(name=str(member), icon_url=str(member.avatar_url))
+        embed.set_thumbnail(url=str(member.avatar_url))
+        embed.set_footer(text=f"User ID: {member.id}")
+        if isinstance(member, discord.Member):
+            embed.add_field(
+                name="Highest Rank", value=str(member.roles[-1]), inline=True
+            )
+            roles = []
+            for role in member.roles[1:]:
+                roles.append(role.mention)
+            roles.reverse()
+            roles_string = " ".join(roles)
+            if len(roles_string) >= 1000:
+                roles_string = "Too many to list"
+            embed.add_field(name="Roles", value=roles_string, inline=True)
+        if isinstance(member, discord.Member):
+            if member.status == discord.Status.online:
+                status = "online"
+            elif member.status is discord.Status.idle:
+                status = "idle"
+            elif isinstance(member.status, discord.Status.do_not_disturb):
+                status = "do not disturb"
+            elif isinstance(member.status, discord.Status.offline):
+                status = "offline"
+            elif isinstance(member.status, str):
+                status = member.status
+            if status is not None:
+                embed.add_field(name="Status", value=status, inline=True)
+
+        embed.add_field(name="Username", value=str(member), inline=True)
+        if isinstance(member, discord.Member):
+            embed.add_field(name="Nickname", value=member.display_name, inline=True)
+
+        embed.add_field(name="Created", value=member.created_at, inline=True)
+        if isinstance(member, discord.Member):
+            embed.add_field(name="Joined", value=member.joined_at, inline=True)
+
+        await ctx.send(embed=embed)

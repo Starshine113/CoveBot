@@ -1,45 +1,63 @@
 [bot]
 # array of prefixes, first prefix will be used in status
-prefixes = ["c!", "c;", "--"]
+prefixes = ["--", ""c!", "c;"]
 # bot token
 token = 'fancydiscordstring'
+# url to postgres database
+database_url = "postgresql://covebot:covebot@localhost/covebot"
 
 [cogs]
+# enable user commands (--enlarge, --ping, --echo)
 enable_user_commands = true
+# enable the starboard
 enable_starboard = true
-enable_gatekeeper = true
+# enable moderation commands
+enable_moderation = true
+# enable notes
 enable_notes = true
+# only one can be enabled at one time
+# if the advanced gatekeeper is enabled it overrides the simple gatekeeper
+enable_advanced_gatekeeper = false
+enable_simple_gatekeeper = true
 
 [guild]
 # id of the guild the bot will operate in
 guild_id = 0
-
-# category where interview channels are made
-interview_category = 0
-# channel where welcome messages are posted
-welcome_channel = 0
-# if true, interviews are read-only for everyone, if false, only people with mod/helper roles can see them
-everyone_can_see_interviews = false
-# can be kept as 0 if everyone_can_see_interviews = false
-hide_interview_role = 0
-# role for seeing separate information channels
-gatekeeper_role = 0
-# member role, added when someone is approved
-member_role = 0
-# webhook with which the interviews are logged
-log_webhook = ""
-
 # roles that can see and type in interview channels -- usually server mod + bots
 mod_roles = [756256769268777051, 755426692146659429]
 # roles that can always see but not interact with interview channels -- usually lower-ranking mods (which is why it also denies "manage messages")
 helper_roles = [756256814487699546]
 
-# array of questions
-interview_questions = [""]
+[moderation]
+mod_log = 0 # moderation log channel
+mute_role = 0 # role for mute commands
+pause_role = 0 # role for puase command
 
+[gatekeeper]
+# channel where welcome messages are posted
+welcome_channel = 0
+# role for seeing separate information channels
+gatekeeper_role = 0
+# member role, added when someone is approved
+member_role = 0
 # available variables (currently): `guild` guild name, `mention` user mention
 welcome_message = "Welcome to {guild}, {mention}!"
 
-[db]
-# url to postgres database
-database_url = "postgresql://covebot:covebot@localhost/covebot"
+[gatekeeper.advanced]
+# category where interview channels are made
+interview_category = 0
+# if true, interviews are read-only for everyone, if false, only people with mod/helper roles can see them
+everyone_can_see_interviews = false
+# can be kept as 0 if everyone_can_see_interviews = false
+hide_interview_role = 0
+# webhook with which the interviews are logged
+log_webhook = ""
+# array of questions
+interview_questions = [""]
+
+[gatekeeper.simple]
+# channel where the gatekeeper message will be posted (and where the user will reply)
+gatekeeper_channel = 0
+# available variables: {mention}
+message = """
+Welcome to the server, {mention}! Please answer these questions..."""
