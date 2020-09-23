@@ -54,30 +54,28 @@ class Highlights(commands.Cog):
                 member = message.guild.get_member(highlight[1])
                 perms = message.channel.permissions_for(member)
                 if perms.read_messages:
-                    print(f"{member.display_name} can read messages here")
-                    if (
+                    if (  # VERY naive matching, TODO fix this
                         re.search(
-                            r"\A" + re.escape(highlight[2]) + r"\Z",
+                            r"\A" + re.escape(highlight[2]) + r"s?\Z",
                             message.content,
                             re.M | re.I,
                         )
                         or re.search(
-                            r"\A" + re.escape(highlight[2]) + r"\W",
+                            r"\A" + re.escape(highlight[2]) + r"s?\W",
                             message.content,
                             re.M | re.I,
                         )
                         or re.search(
-                            r"\W" + re.escape(highlight[2]) + r"\Z",
+                            r"\W" + re.escape(highlight[2]) + r"s?\Z",
                             message.content,
                             re.M | re.I,
                         )
                         or re.search(
-                            r"\W" + re.escape(highlight[2]) + r"\W",
+                            r"\W" + re.escape(highlight[2]) + r"s?\W",
                             message.content,
                             re.M | re.I,
                         )
                     ):
-                        print(f"Matched with highlight word {highlight[2]}")
                         await asyncio.sleep(1)
                         hl_message, embed = await self.create_message(
                             message, highlight[2]
