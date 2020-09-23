@@ -59,6 +59,7 @@ bot = commands.Bot(
 @bot.event
 async def on_connect():
     await bot.change_presence(
+        status=discord.Status.idle,
         activity=discord.Game(name="Starting... (please wait)"),
     )
 
