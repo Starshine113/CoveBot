@@ -68,11 +68,11 @@ class UserCommands(commands.Cog):
             description="CoveBotn't is a general purpose custom bot for the Cove. It currently handles the starboard and moderation notes.",
         )
         embed.set_footer(
-            text="Created by Starshine System (Starshine ☀✨#5000) | CoveBotn't v0.5"
+            text="Created by Starshine System (Starshine ☀✨#5000) | CoveBotn't v0.9"
         )
         embed.add_field(
             name="Source code",
-            value="The source code can be found [here](https://github.com/Starshine113/CoveBot/).",
+            value="The source code can be found [here](https://github.com/Starshine113/CoveBotnt/).",
             inline=False,
         )
         await ctx.send(embed=embed)
