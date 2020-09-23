@@ -1,10 +1,11 @@
-# CoveBot
+# CoveBotn't
 
-CoveBot is a general moderation bot for the Cove.
+CoveBotn't is a general moderation bot for the Cove.
 
 - Interview gatekeeper system
 - Notes
 - Starboard
+- Some user commands
 
 ## Requirements
 
