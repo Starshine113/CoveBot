@@ -17,10 +17,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import psycopg2
+import datetime
 import aiopg
 
 
-DATABASE_VERSION = 9
+DATABASE_VERSION = 10
 
 
 async def init_dbconn(database_url):
@@ -34,7 +35,9 @@ class DatabaseConn:
         self.database_url = database_url
 
     async def _init(self):
-        self.pool = await aiopg.create_pool(self.database_url)
+        self.pool = await aiopg.create_pool(
+            self.database_url, cursor_factory=psycopg2.extras.DictCursor
+        )
         await self.init_db_if_not_initialised()
         await self.update_db()
 

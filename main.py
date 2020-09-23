@@ -23,7 +23,7 @@ import discord
 from discord.ext import commands
 import tomlkit
 from database import database as botdb
-from bot import interviews, starboard, user_commands, notes, gatekeeper
+from bot import interviews, starboard, user_commands, notes, gatekeeper, moderation
 
 
 config_file = Path("config.toml")
@@ -91,6 +91,8 @@ async def on_ready():
         bot.add_cog(gatekeeper.SimpleGatekeeper(bot, conn, bot_config, logger))
     if bot_config["cogs"]["enable_notes"]:
         bot.add_cog(notes.Notes(bot, conn, logger))
+    if bot_config["cogs"]["enable_moderation"]:
+        bot.add_cog(moderation.Moderation(bot, conn, bot_config, logger))
     if bot_config["cogs"]["enable_starboard"]:
         bot.add_cog(
             starboard.Starboard(
