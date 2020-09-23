@@ -21,7 +21,7 @@ import datetime
 import aiopg
 
 
-DATABASE_VERSION = 10
+DATABASE_VERSION = 11
 
 
 async def init_dbconn(database_url):
@@ -192,6 +192,77 @@ class DatabaseConn:
     async def channel_not_blacklisted(self, channel_id: int):
         blacklist = await self.get_blacklist()
         return channel_id not in blacklist
+
+    # moderation functions
+
+    async def add_to_mod_logs(
+        self, user_id: int, mod_id: int, action_type: str, reason: str
+    ):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO modactions (user_id, mod_id, type, reason) VALUES (%s, %s, %s, %s)",
+                    (user_id, mod_id, action_type, reason),
+                )
+
+    async def set_pending_action(
+        self,
+        user_id: int,
+        action_type: str,
+        roles_to_remove: list,
+        roles_to_add: list,
+        action_time: datetime.datetime,
+    ):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO pending_actions (user_id, type, roles_to_remove, roles_to_add, action_time) VALUES (%s, %s, %s, %s, %s)",
+                    (
+                        user_id,
+                        action_type,
+                        roles_to_remove,
+                        roles_to_add,
+                        action_time,
+                    ),
+                )
+
+    # highlights
+
+    async def add_highlight(self, user_id: int, highlight: str):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO highlights (user_id, word) VALUES (%s, %s)",
+                    (
+                        user_id,
+                        highlight,
+                    ),
+                )
+
+    async def remove_highlight(self, user_id: int, highlight: str):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "DELETE FROM highlights WHERE user_id = %s AND word = %s",
+                    (
+                        user_id,
+                        highlight,
+                    ),
+                )
+
+    async def get_highlights_for_user(self, user_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT * FROM highlights WHERE user_id = %s", (user_id,)
+                )
+                return await cur.fetchall()
+
+    async def get_all_highlights(self):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT * FROM highlights")
+                return await cur.fetchall()
 
     # database initialisation functions
 

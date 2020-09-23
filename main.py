@@ -23,7 +23,15 @@ import discord
 from discord.ext import commands
 import tomlkit
 from database import database as botdb
-from bot import interviews, starboard, user_commands, notes, gatekeeper, moderation
+from bot import (
+    interviews,
+    starboard,
+    user_commands,
+    notes,
+    gatekeeper,
+    moderation,
+    highlight,
+)
 
 
 config_file = Path("config.toml")
@@ -99,6 +107,8 @@ async def on_ready():
                 bot, conn, await conn.get_starboard_settings(), bot_config, logger
             )
         )
+    if bot_config["cogs"]["enable_highlights"]:
+        bot.add_cog(highlight.Highlights(bot, conn, logger))
     logger.log(logging.INFO, f"Bot ready")
 
     await bot.change_presence(
