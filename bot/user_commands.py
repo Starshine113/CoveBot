@@ -171,6 +171,7 @@ class UserCommands(commands.Cog):
     @commands.command(
         name="roleinfo", help="Get information about a role", aliases=["role-info"]
     )
+    @commands.guild_only()
     @commands.cooldown(1, 1, commands.BucketType.channel)
     async def role_info(self, ctx, *, role: typing.Optional[discord.Role] = None):
         if not role:
