@@ -158,10 +158,17 @@ class Moderation(commands.Cog):
             channel = ctx.message.channel
         if delay > 21600 or delay < 0:
             ctx.send(
-                "```{ctx.prefix}slowmode <delay: int> [channel: TextChannel]```\nError: `delay` must be between 0 and 21600 seconds."
+                f"```{ctx.prefix}slowmode <delay: int> [channel: TextChannel]```\nError: `delay` must be between 0 and 21600 seconds."
             )
         else:
             await channel.edit(slowmode_delay=delay)
             await ctx.send(
                 f"✅ Set the slowmode for <#{channel.id}> to {delay} seconds."
+            )
+
+    @slowmode.error
+    async def slowmode_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send(
+                f"```{ctx.prefix}slowmode <delay: int> [channel: TextChannel]```\nError: missing required parameter `{error.param.name}`"
             )
