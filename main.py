@@ -61,6 +61,7 @@ bot = commands.Bot(
     command_prefix=commands.when_mentioned_or(*bot_config["bot"]["prefixes"]),
     description=description,
     case_insensitive=True,
+    allowed_mentions=discord.AllowedMentions(everyone=False, users=False, roles=False),
 )
 
 
