@@ -365,3 +365,25 @@ class Moderation(commands.Cog):
             inline=False,
         )
         return embed
+
+    @commands.command(help="Mass-ban users with an optional reason.")
+    @commands.has_permissions(ban_members=True, manage_guild=True)
+    async def massban(self, ctx, users: commands.Greedy[discord.User]):
+        await ctx.trigger_typing()
+        for user in users:
+            await ctx.guild.ban(user, reason=f"Massban by {str(ctx.author)}")
+        await ctx.send(f"Banned {len(users)} users.")
+
+    @commands.command(help="Unban a user with an optional reason.")
+    @commands.has_permissions(ban_members=True)
+    async def unban(self, ctx, user: discord.User, *, reason: str = "None"):
+        await ctx.trigger_typing()
+        await ctx.guild.unban(
+            user, reason=f"Unbanned by {str(ctx.author)} reason: {reason}"
+        )
+        await ctx.send(f"Unbanned **{str(user)}**.")
+
+    @unban.error
+    async def unban_error(self, ctx, error):
+        if isinstance(error, discord.HTTPException):
+            await ctx.send("That user is not banned.")
