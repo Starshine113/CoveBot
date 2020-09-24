@@ -18,6 +18,7 @@
 
 import datetime
 import logging
+import math
 import re
 import typing
 import discord
@@ -72,22 +73,35 @@ class Moderation(commands.Cog):
 
     @tasks.loop(seconds=30.0)
     async def do_pending_actions(self):
-        pass
+        guild = self.bot.get_guild(self.bot_config["guild"]["guild_id"])
+        actions = await self.conn.get_pending_actions()
+        for action in actions:
+            if action[4] < datetime.datetime.utcnow():
+                member = guild.get_member(action[5])
+                if action[1] == "mute" or action[1] == "hardmute":
+                    await self.unmute_inner(member, action[2], action[3])
+                    await self.conn.add_to_mod_logs(
+                        member.id, self.bot.user.id, "unmute", "Automatic unmute"
+                    )
+                    await self.make_log_embed(
+                        member,
+                        "unmuted",
+                        guild.get_member(self.bot.user.id),
+                        "Automatic unmute",
+                    )
+                    await self.conn.delete_pending_action(action[0])
 
-    @commands.command()
-    async def time(
-        self,
-        ctx,
-        member: discord.Member,
-        duration: Duration,
-        *,
-        reason: typing.Optional[str] = None,
-    ):
-        await ctx.send(
-            f"{ctx.author} muted {member} for {duration}. Reason: **{reason}**"
-        )
+    @commands.command(help="Warn a user.")
+    @commands.has_permissions(manage_messages=True)
+    async def warn(self, ctx, member: discord.Member, *, reason: str):
+        await ctx.trigger_typing()
+        await self.conn.add_to_mod_logs(member.id, ctx.author.id, "warn", reason)
+        await member.send(f"You were warned in {ctx.guild.name}. Reason: {reason}")
+        await self.make_log_embed(member, "warned", ctx.author, reason)
+        await ctx.send(f"Warned **{member}**.")
 
-    # @commands.command(help="Mute a user for the specified duration.")
+    @commands.command(help="Mute a user for the specified duration.")
+    @commands.has_permissions(manage_messages=True)
     async def mute(
         self,
         ctx,
@@ -96,40 +110,165 @@ class Moderation(commands.Cog):
         *,
         reason: typing.Optional[str] = None,
     ):
+        mute_role = ctx.guild.get_role(self.bot_config["moderation"]["mute_role"])
+        if member.top_role.position >= ctx.author.top_role.position:
+            await ctx.send("You are not high enough in the role hierarchy to do that.")
+            return True
+        if mute_role in member.roles:
+            await ctx.send(f"{member} is already muted.")
+            return True
+        await ctx.trigger_typing()
         if not reason:
             reason = "None"
         expire_time = datetime.datetime.utcnow() + duration
-        self.conn.set_pending_action(
+        await self.conn.set_pending_action(
             member.id,
             "mute",
-            self.bot_config["moderation"]["mute_role"],
+            [mute_role.id],
+            None,
             expire_time,
         )
-        await member.add_roles(
-            ctx.guild.get_role(self.bot_config["moderation"]["mute_role"])
-        )
-        self.conn.add_to_mod_logs(member.id, ctx.author.id, "mute", reason)
+        await member.add_roles(mute_role)
+        await self.conn.add_to_mod_logs(member.id, ctx.author.id, "mute", reason)
         await ctx.send(
-            f"**{ctx.author}** muted **{member}** for {duration}. Reason: {reason}"
+            f"**{ctx.message.author}** muted **{member}** for {duration}. Reason: {reason}"
         )
+        await member.send(
+            f"You were muted in {ctx.guild.name} for {duration}. Reason: {reason}"
+        )
+        await self.make_log_embed(member, "muted", ctx.author, reason)
 
-    # @mute.error
+    @mute.error
     async def mute_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(
-                f"```{ctx.prefix}mute <user: Member> <duration: Duration> <reason: str>```\nError: missing required parameter `{error.param.name}`"
+                f"```{ctx.prefix}mute <user: Member> <duration: Duration> [reason: str]```\nError: missing required parameter `{error.param.name}`"
             )
 
-    def make_log_embed(
-        self, member: discord.Member, action_type: str, reason: str = "None"
+    @commands.command(help="Hardmute a user for the specified duration.")
+    @commands.has_permissions(kick_members=True)
+    async def hardmute(
+        self,
+        ctx,
+        member: discord.Member,
+        duration: Duration,
+        *,
+        reason: typing.Optional[str] = None,
     ):
-        pass
+        mute_role = ctx.guild.get_role(self.bot_config["moderation"]["mute_role"])
+        if member.top_role.position >= ctx.author.top_role.position:
+            await ctx.send("You are not high enough in the role hierarchy to do that.")
+            return True
+        bot_user = ctx.guild.get_member(self.bot.user.id)
+        if member.top_role.position >= bot_user.top_role.position:
+            await ctx.send("I am not high enough in the role hierachy to do that.")
+            return True
+        if mute_role in member.roles:
+            await ctx.send(f"{member} is already muted.")
+            return True
+        await ctx.trigger_typing()
+        if not reason:
+            reason = "None"
+        roles_to_add = []
+        all_roles = member.roles[1:]
+        for role in all_roles:
+            roles_to_add.append(role.id)
+        await member.remove_roles(*all_roles)
+        expire_time = datetime.datetime.utcnow() + duration
+        await self.conn.set_pending_action(
+            member.id,
+            "hardmute",
+            [mute_role.id],
+            roles_to_add,
+            expire_time,
+        )
+        await member.add_roles(mute_role)
+        await self.conn.add_to_mod_logs(member.id, ctx.author.id, "hardmute", reason)
+        await ctx.send(
+            f"**{ctx.message.author}** hardmuted **{member}** for {duration}. Reason: {reason}"
+        )
+        await member.send(
+            f"You were hardmuted in {ctx.guild.name} for {duration}. Reason: {reason}"
+        )
+        await self.make_log_embed(member, "hardmuted", ctx.author, reason)
+
+    @mute.error
+    async def hardmute_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send(
+                f"```{ctx.prefix}hardmute <user: Member> <duration: Duration> [reason: str]```\nError: missing required parameter `{error.param.name}`"
+            )
+
+    @commands.command(help="Unmute a user.")
+    @commands.has_permissions(manage_messages=True)
+    async def unmute(
+        self,
+        ctx,
+        member: discord.Member,
+        *,
+        reason: typing.Optional[str] = None,
+    ):
+        mute_role = ctx.guild.get_role(self.bot_config["moderation"]["mute_role"])
+        if not mute_role in member.roles:
+            await ctx.send("That member is not muted.")
+            return True
+        if member.top_role.position >= ctx.author.top_role.position:
+            await ctx.send("You are not high enough in the role hierarchy to do that.")
+            return True
+        await ctx.trigger_typing()
+        if not reason:
+            reason = "None"
+        db_entry = await self.conn.get_mute(member.id)
+        await self.unmute_inner(member, db_entry[2], db_entry[3])
+        await self.conn.add_to_mod_logs(member.id, ctx.author.id, "unmute", reason)
+        await self.conn.delete_pending_action(db_entry[0])
+        await self.make_log_embed(member, "unmuted", ctx.author, reason)
+        await ctx.send(f"Unmuted **{member}**.")
+
+    async def unmute_inner(
+        self, member: discord.Member, remove_roles=None, add_roles=None
+    ):
+        if remove_roles:
+            remove = []
+            for role in remove_roles:
+                remove.append(member.guild.get_role(role))
+        else:
+            remove = None
+        if add_roles:
+            add = []
+            for role in add_roles:
+                add.append(member.guild.get_role(role))
+        else:
+            add = None
+        if remove:
+            await member.remove_roles(*remove)
+        if add:
+            await member.add_roles(*add)
+
+    async def make_log_embed(
+        self,
+        member: discord.Member,
+        action_type: str,
+        mod: discord.Member,
+        reason: str = "None",
+    ):
+        guild = self.bot.get_guild(self.bot_config["guild"]["guild_id"])
+        log_channel = guild.get_channel(self.bot_config["moderation"]["mod_log"])
+        embed = discord.Embed(
+            title=f"{action_type.title()} {member}",
+            colour=discord.Colour(0x404ADD),
+            description=f"**{mod}** {action_type} **{member}**.\nReason: **{reason}**",
+            timestamp=datetime.datetime.utcnow(),
+        )
+        embed.set_footer(text=f"User ID: {member.id} | Moderator ID: {mod.id}")
+        await log_channel.send(embed=embed)
 
     @commands.command(help="Lock a channel", aliases=["lock", "ld"])
     @commands.has_permissions(manage_guild=True)
     async def lockdown(self, ctx, channel: typing.Optional[discord.TextChannel] = None):
         if not channel:
             channel = ctx.message.channel
+        await ctx.trigger_typing()
         overwrites = channel.overwrites
         overwrites[ctx.guild.default_role].update(send_messages=False)
         overwrites[self.bot.user] = discord.PermissionOverwrite(send_messages=True)
@@ -156,6 +295,7 @@ class Moderation(commands.Cog):
     ):
         if not channel:
             channel = ctx.message.channel
+        await ctx.trigger_typing()
         if delay > 21600 or delay < 0:
             ctx.send(
                 f"```{ctx.prefix}slowmode <delay: int> [channel: TextChannel]```\nError: `delay` must be between 0 and 21600 seconds."
@@ -172,3 +312,56 @@ class Moderation(commands.Cog):
             await ctx.send(
                 f"```{ctx.prefix}slowmode <delay: int> [channel: TextChannel]```\nError: missing required parameter `{error.param.name}`"
             )
+
+    @commands.command(help="Show a user's moderation logs.")
+    @commands.has_permissions(manage_messages=True)
+    async def modlogs(
+        self,
+        ctx,
+        user: discord.User,
+        page: typing.Optional[int] = 1,
+    ):
+        await ctx.trigger_typing()
+        mod_logs = await self.conn.get_logs_for_user(user.id)
+        mod_logs.reverse()
+        minimum = (page - 1) * 10
+        maximum = page * 10
+        if len(mod_logs) < minimum:
+            await ctx.send("That page doesn't exist.")
+            return True
+        if len(mod_logs) <= maximum:
+            maximum = len(mod_logs)
+        mod_log_page = mod_logs[minimum:maximum]
+        embed = discord.Embed(
+            colour=discord.Colour(0x404ADD),
+            timestamp=datetime.datetime.utcnow(),
+        )
+        embed.set_author(name=str(user), icon_url=str(user.avatar_url))
+        embed.set_footer(text=f"User ID: {user.id}")
+        for log_entry in mod_log_page:
+            embed = await self.add_log_entry(embed, log_entry)
+        if mod_logs:
+            embed.title = f"Page {page}/{math.ceil(len(mod_logs) / 10)}"
+        else:
+            embed.description = "There are no moderation logs for this user."
+        await ctx.send(embed=embed)
+
+    @modlogs.error
+    async def modlogs_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send(
+                f"```{ctx.prefix}modlogs <user: User> [page: int]```\nError: missing required parameter `{error.param.name}`"
+            )
+
+    async def add_log_entry(
+        self,
+        embed: discord.Embed,
+        entry: list,
+    ) -> discord.Embed:
+        mod = self.bot.get_user((entry[2]))
+        embed.add_field(
+            name=f"Case #{entry[0]}: {entry[3]}",
+            value=f"By **{mod}** ({entry[2]})\nReason: **{entry[4]}**\nTime: {entry[5].strftime('%Y-%m-%d %H:%M:%S')} UTC",
+            inline=False,
+        )
+        return embed

@@ -21,7 +21,7 @@ import datetime
 import aiopg
 
 
-DATABASE_VERSION = 11
+DATABASE_VERSION = 12
 
 
 async def init_dbconn(database_url):
@@ -225,6 +225,36 @@ class DatabaseConn:
                         action_time,
                     ),
                 )
+
+    async def delete_pending_action(self, action_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "DELETE FROM pending_actions WHERE id = %s", (action_id,)
+                )
+
+    async def get_pending_actions(self):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT * FROM pending_actions")
+                return await cur.fetchall()
+
+    async def get_mute(self, user_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "select * from pending_actions where type::text = any (array['mute', 'hardmute']) and user_id = %s",
+                    (user_id,),
+                )
+                return await cur.fetchone()
+
+    async def get_logs_for_user(self, user_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT * FROM modactions WHERE user_id = %s", (user_id,)
+                )
+                return await cur.fetchall()
 
     # highlights
 
