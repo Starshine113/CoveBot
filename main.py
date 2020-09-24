@@ -90,31 +90,40 @@ async def on_ready():
 
     activity = "{}help".format(bot_config["bot"]["prefixes"][0])
 
+    global loaded_cogs
+    global conn
     conn = await botdb.init_dbconn(bot_config["bot"]["database_url"])
+    global starboard_settings
+    starboard_settings = await conn.get_starboard_settings()
 
-    if bot_config["cogs"]["enable_user_commands"]:
-        bot.add_cog(user_commands.UserCommands(bot, conn, logger))
-    if bot_config["cogs"]["enable_advanced_gatekeeper"]:
-        bot.add_cog(interviews.Interviews(bot, conn, bot_config, logger))
-    elif bot_config["cogs"]["enable_simple_gatekeeper"]:
-        bot.add_cog(gatekeeper.SimpleGatekeeper(bot, conn, bot_config, logger))
-    if bot_config["cogs"]["enable_notes"]:
-        bot.add_cog(notes.Notes(bot, conn, logger))
-    if bot_config["cogs"]["enable_moderation"]:
-        bot.add_cog(moderation.Moderation(bot, conn, bot_config, logger))
-    if bot_config["cogs"]["enable_starboard"]:
-        bot.add_cog(
-            starboard.Starboard(
-                bot, conn, await conn.get_starboard_settings(), bot_config, logger
+    if not loaded_cogs:
+        if bot_config["cogs"]["enable_user_commands"]:
+            bot.add_cog(user_commands.UserCommands(bot, conn, logger))
+        if bot_config["cogs"]["enable_advanced_gatekeeper"]:
+            bot.add_cog(interviews.Interviews(bot, conn, bot_config, logger))
+        elif bot_config["cogs"]["enable_simple_gatekeeper"]:
+            bot.add_cog(gatekeeper.SimpleGatekeeper(bot, conn, bot_config, logger))
+        if bot_config["cogs"]["enable_notes"]:
+            bot.add_cog(notes.Notes(bot, conn, logger))
+        if bot_config["cogs"]["enable_moderation"]:
+            bot.add_cog(moderation.Moderation(bot, conn, bot_config, logger))
+        if bot_config["cogs"]["enable_starboard"]:
+            bot.add_cog(
+                starboard.Starboard(
+                    bot, conn, await conn.get_starboard_settings(), bot_config, logger
+                )
             )
-        )
-    if bot_config["cogs"]["enable_highlights"]:
-        bot.add_cog(highlight.Highlights(bot, conn, logger))
+        if bot_config["cogs"]["enable_highlights"]:
+            bot.add_cog(highlight.Highlights(bot, conn, logger))
+
     logger.log(logging.INFO, f"Bot ready")
 
     await bot.change_presence(
         status=discord.Status.online, activity=discord.Game(name=activity)
     )
 
+    loaded_cogs = True
 
+
+loaded_cogs = False
 bot.run(bot_config["bot"]["token"])
