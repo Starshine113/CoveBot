@@ -44,14 +44,20 @@ class Starboard(commands.Cog):
         limit = self.settings[2]
         emoji = self.settings[3]
         await ctx.send(
-            f"The current starboard channel is <#{channel.id}>.\nThe current emoji for the starboard is {emoji}.\nA message needs {limit} stars to get on <#{channel.id}>."
+            embed=discord.Embed(
+                description=f"The current starboard channel is <#{channel.id}>.\nThe current emoji for the starboard is {emoji}.\nA message needs {limit} stars to get on <#{channel.id}>."
+            )
         )
 
     @starboard.command(help="Set the channel where starboard messages are sent.")
     async def channel(self, ctx, channel: discord.TextChannel):
         await self.conn.set_starboard_channel(channel.id)
         self.settings = await self.conn.get_starboard_settings()
-        await ctx.send(f"✅ Starboard channel set to {channel.mention}.")
+        await ctx.send(
+            embed=discord.Embed(
+                description=f"✅ Starboard channel set to {channel.mention}."
+            )
+        )
         self.logger.log(
             logging.INFO, f"Set starboard channel to #{channel.name} ({channel.id})"
         )
@@ -60,14 +66,18 @@ class Starboard(commands.Cog):
     async def emoji(self, ctx, arg: str):
         await self.conn.set_starboard_emoji(arg)
         self.settings = await self.conn.get_starboard_settings()
-        await ctx.send(f"✅ Starboard emoji set to {arg}.")
+        await ctx.send(
+            embed=discord.Embed(description=f"✅ Starboard emoji set to {arg}.")
+        )
         self.logger.log(logging.INFO, f"Set starboard emoji to {arg}")
 
     @starboard.command(help="Set the emoji limit for messages to get on the starboard.")
     async def limit(self, ctx, limit: int):
         await self.conn.set_starboard_limit(limit)
         self.settings = await self.conn.get_starboard_settings()
-        await ctx.send(f"✅ Starboard limit set to {limit}.")
+        await ctx.send(
+            embed=discord.Embed(description=f"✅ Starboard limit set to {limit}.")
+        )
         self.logger.log(logging.INFO, f"Set starboard limit to {limit}")
 
     @commands.Cog.listener()
