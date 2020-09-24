@@ -198,6 +198,42 @@ class UserCommands(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @commands.command(help="Create an embed", name="embed", aliases=["create-embed"])
+    @commands.has_guild_permissions(manage_messages=True)
+    async def send_embed(
+        self,
+        ctx,
+        channel: typing.Optional[discord.TextChannel] = None,
+        colour: str = "#000000",
+        *,
+        message: str,
+    ):
+        if not channel:
+            channel = ctx.message.channel
+        if colour.startswith("#"):
+            colour_code = int(colour[1:], 16)
+        else:
+            colour_code = int(colour, 16)
+        entries = message.split("|")
+        entries.append(None)
+        perms = channel.permissions_for(ctx.author)
+        if perms.manage_messages:
+            if entries[1]:
+                embed = discord.Embed(
+                    title=entries[0],
+                    description=entries[1],
+                    colour=discord.Colour(colour_code),
+                )
+            else:
+                embed = discord.Embed(
+                    description=entries[0], colour=discord.Colour(colour_code)
+                )
+            await channel.send(embed=embed)
+        else:
+            await ctx.send(
+                "❌ You do not have the manage messages permission in that channel."
+            )
+
     @commands.command(name="setstatus")
     @commands.is_owner()
     async def set_status(self, ctx, *, args: str):

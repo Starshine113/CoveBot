@@ -6,6 +6,7 @@ CoveBotn't is a general moderation bot for the Cove.
 - Notes
 - Starboard
 - Some user commands
+- Highlights
 
 ## Requirements
 

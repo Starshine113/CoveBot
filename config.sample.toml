@@ -21,6 +21,8 @@ enable_notes = true
 # if the advanced gatekeeper is enabled it overrides the simple gatekeeper
 enable_advanced_gatekeeper = false
 enable_simple_gatekeeper = true
+# enable the highlights feature
+enable_highlights = true
 
 [guild]
 # id of the guild the bot will operate in

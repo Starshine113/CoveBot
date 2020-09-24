@@ -138,7 +138,11 @@ class Highlights(commands.Cog):
             await ctx.send("Your highlight is too short (minimum 2 characters).")
         else:
             await self.conn.add_highlight(ctx.author.id, word)
-            await ctx.send(f'Added "{word}" to your highlights.')
+            embed = discord.Embed(
+                description=f'Added "{word}" to your highlights.',
+                colour=discord.Colour(0xF8E71C),
+            )
+            await ctx.send(embed=embed)
 
     @highlight.command()
     async def remove(self, ctx, *, word: str):
@@ -149,4 +153,8 @@ class Highlights(commands.Cog):
                 matched = word
         if matched:
             await self.conn.remove_highlight(ctx.author.id, word)
-            await ctx.send(f'Removed "{word}" from your highlighted words.')
+            embed = discord.Embed(
+                description=f'Removed "{word}" from your highlighted words.',
+                colour=discord.Colour(0xF8E71C),
+            )
+            await ctx.send(embed=embed)
