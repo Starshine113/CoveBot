@@ -41,6 +41,9 @@ class DatabaseConn:
         await self.init_db_if_not_initialised()
         await self.update_db()
 
+    def get_version(self):
+        return DATABASE_VERSION
+
     async def create_interview(
         self, user_id: int, channel_id: int, welcome_message_id: int
     ):
