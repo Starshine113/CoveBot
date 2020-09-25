@@ -65,10 +65,10 @@ class UserCommands(commands.Cog):
         embed = discord.Embed(
             title="About CoveBotn't",
             colour=discord.Colour(0xF8E71C),
-            description="CoveBotn't is a general purpose custom bot for the Cove. It currently handles the starboard and moderation notes.",
+            description="CoveBotn't is a general purpose custom bot for the Cove. It currently handles the gatekeeper, starboard, mod notes, some moderator actions, highlights.",
         )
         embed.set_footer(
-            text="Created by Starshine System (Starshine ☀✨#5000) | CoveBotn't v0.9"
+            text="Created by Starshine System (Starshine ☀✨#5000) | CoveBotn't v0.13"
         )
         embed.add_field(
             name="Source code",
