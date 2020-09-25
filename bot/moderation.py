@@ -94,6 +94,9 @@ class Moderation(commands.Cog):
     @commands.command(help="Warn a user.")
     @commands.has_permissions(manage_messages=True)
     async def warn(self, ctx, member: discord.Member, *, reason: str):
+        if member.id == self.bot.user.id:
+            await ctx.send("But why? <:meowsob:759071377562009620>")
+            return True
         await ctx.trigger_typing()
         await self.conn.add_to_mod_logs(member.id, ctx.author.id, "warn", reason)
         await member.send(f"You were warned in {ctx.guild.name}. Reason: {reason}")
