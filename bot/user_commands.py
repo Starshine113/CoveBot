@@ -105,6 +105,21 @@ class UserCommands(commands.Cog):
                 ),
             )
 
+    @commands.command(help="Get a user's avatar", aliases=["pfp", "profile-picture"])
+    @commands.cooldown(1, 1, commands.BucketType.channel)
+    async def avatar(
+        self, ctx, user: typing.Union[discord.User, discord.Member] = None
+    ):
+        if not user:
+            user = ctx.author
+        embed = discord.Embed(colour=discord.Colour(0xF8E71C))
+        embed.timestamp = datetime.datetime.utcnow()
+        embed.title = f"Avatar for {str(user)}"
+        embed.description = f"[Direct link]({str(user.avatar_url)}) ([PNG]({str(user.avatar_url_as(static_format='png'))}))"
+        embed.set_image(url=str(user.avatar_url))
+        embed.set_footer(text=f"User ID: {user.id}")
+        await ctx.send(embed=embed)
+
     @commands.command(help="Get information about a user", aliases=["i", "profile"])
     @commands.cooldown(1, 1, commands.BucketType.channel)
     async def info(
