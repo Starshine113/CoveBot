@@ -19,6 +19,7 @@
 import datetime
 import logging
 import re
+import subprocess
 import typing
 import discord
 from discord.ext import commands
@@ -29,6 +30,12 @@ class UserCommands(commands.Cog):
         self.bot = bot
         self.conn = conn
         self.logger = logger
+        self.current_revision = subprocess.run(
+            ["git", "log", "-1", "--format=%h"], stdout=subprocess.PIPE
+        ).stdout.decode("utf-8")
+        if not self.current_revision:
+            self.current_revision = "UNKNOWN"
+
         self.logger.log(logging.INFO, "Loaded commands cog")
         print("Loaded commands cog")
 
@@ -68,7 +75,7 @@ class UserCommands(commands.Cog):
             description="CoveBotn't is a general purpose custom bot for the Cove. It currently handles the gatekeeper, starboard, mod notes, some moderator actions, highlights.",
         )
         embed.set_footer(
-            text=f"Created by Starshine System (Starshine ☀✨#5000) | CoveBotn't v0.13 | DB version: {self.conn.get_version()}"
+            text=f"Created by Starshine System (Starshine ☀✨#5000) | CoveBotn't v0.{self.conn.get_version()}-{self.current_revision}"
         )
         embed.add_field(
             name="Source code",
