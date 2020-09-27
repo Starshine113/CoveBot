@@ -176,7 +176,7 @@ class Moderation(commands.Cog):
         all_roles = member.roles[1:]
         for role in all_roles:
             roles_to_add.append(role.id)
-        await member.remove_roles(*all_roles)
+        await member.remove_roles(*all_roles, atomic=False)
         expire_time = datetime.datetime.utcnow() + duration
         await self.conn.set_pending_action(
             member.id,
@@ -185,7 +185,7 @@ class Moderation(commands.Cog):
             roles_to_add,
             expire_time,
         )
-        await member.add_roles(mute_role)
+        await member.add_roles(mute_role, atomic=False)
         await self.conn.add_to_mod_logs(member.id, ctx.author.id, "hardmute", reason)
         await ctx.send(
             f"**{ctx.message.author}** hardmuted **{member}** for {duration}. Reason: {reason}"
@@ -244,9 +244,9 @@ class Moderation(commands.Cog):
         else:
             add = None
         if remove:
-            await member.remove_roles(*remove)
+            await member.remove_roles(*remove, atomic=False)
         if add:
-            await member.add_roles(*add)
+            await member.add_roles(*add, atomic=False)
 
     async def make_log_embed(
         self,
