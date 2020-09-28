@@ -19,20 +19,23 @@
 import logging
 import os
 from pathlib import Path
-import discord
-from discord.ext import commands
-import tomlkit
-from database import database as botdb
-from bot import (
-    interviews,
-    starboard,
-    user_commands,
-    notes,
-    gatekeeper,
-    moderation,
-    highlight,
-)
 
+import discord
+import tomlkit
+from discord.ext import commands
+
+from bot import (
+    gatekeeper,
+    highlight,
+    interviews,
+    moderation,
+    notes,
+    starboard,
+    tickets,
+    user_commands,
+    helpcommand,
+)
+from database import database as botdb
 
 config_file = Path("config.toml")
 
@@ -97,6 +100,7 @@ async def on_ready():
     starboard_settings = await conn.get_starboard_settings()
 
     if not loaded_cogs:
+        bot.add_cog(helpcommand.HelpCommand(bot, conn, bot_config, logger))
         if bot_config["cogs"]["enable_user_commands"]:
             bot.add_cog(user_commands.UserCommands(bot, conn, logger))
         if bot_config["cogs"]["enable_advanced_gatekeeper"]:
