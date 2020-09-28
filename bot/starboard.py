@@ -108,6 +108,8 @@ class Starboard(commands.Cog):
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
         guild = self.bot.get_guild(payload.guild_id)
+        if not payload.guild_id:
+            return
         if guild.id == self.bot_config["guild"]["guild_id"]:
             channel = guild.get_channel(payload.channel_id)
             message = await channel.fetch_message(payload.message_id)
