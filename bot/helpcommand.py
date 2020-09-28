@@ -51,9 +51,10 @@ class HelpCommand(commands.Cog):
     async def help(self, ctx):
         if ctx.guild:
             await self.send_help(ctx.message.author, ctx.author)
-            await ctx.send("Check your DMs!")
+            await ctx.send("📬 Check your DMs!")
         else:
             await self.send_help(ctx, ctx.author)
+        await ctx.message.add_reaction("✅")
 
     # send help messages
     async def send_help(self, channel, user: discord.User):
