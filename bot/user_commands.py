@@ -30,11 +30,6 @@ class UserCommands(commands.Cog):
         self.bot = bot
         self.conn = conn
         self.logger = logger
-        self.current_revision = subprocess.run(
-            ["git", "log", "-1", "--format=%h"], stdout=subprocess.PIPE
-        ).stdout.decode("utf-8")
-        if not self.current_revision:
-            self.current_revision = "UNKNOWN"
 
         self.logger.log(logging.INFO, "Loaded commands cog")
         print("Loaded commands cog")
@@ -64,25 +59,6 @@ class UserCommands(commands.Cog):
     @commands.cooldown(1, 3, commands.BucketType.channel)
     async def ping(self, ctx):
         await ctx.send("Pong! Latency: {}ms".format(round(self.bot.latency * 1000, 2)))
-
-    # this should be part of the help command eventually but we're l a z y and can't be bothered to figure that out yet
-    @commands.command(help="Show some info about the bot.")
-    @commands.cooldown(1, 3, commands.BucketType.channel)
-    async def about(self, ctx):
-        embed = discord.Embed(
-            title="About CoveBotn't",
-            colour=discord.Colour(0xF8E71C),
-            description="CoveBotn't is a general purpose custom bot for the Cove. It currently handles the gatekeeper, starboard, mod notes, some moderator actions, highlights.",
-        )
-        embed.set_footer(
-            text=f"Created by Starshine System (Starshine ☀✨#5000) | CoveBotn't v0.{self.conn.get_version()}-{self.current_revision}"
-        )
-        embed.add_field(
-            name="Source code",
-            value="The source code can be found [here](https://github.com/Starshine113/CoveBotnt/).",
-            inline=False,
-        )
-        await ctx.send(embed=embed)
 
     @commands.command(help="Say something in a channel", aliases=["say"])
     @commands.has_permissions(manage_guild=True)
