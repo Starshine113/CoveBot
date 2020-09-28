@@ -16,8 +16,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import datetime
 import logging
+from datetime import datetime
+
 import discord
 from discord.ext import commands
 
@@ -66,6 +67,9 @@ class SimpleGatekeeper(commands.Cog):
         await member.remove_roles(
             ctx.message.author.guild.get_role(
                 self.bot_config["gatekeeper"]["gatekeeper_role"]
+            ),
+            ctx.message.author.guild.get_role(
+                self.bot_config["gatekeeper"]["simple"]["gatekeeper2_role"]
             ),
             reason="Gatekeeper: approved",
         )
