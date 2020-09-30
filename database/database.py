@@ -16,12 +16,15 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import psycopg2
 import datetime
+from functools import reduce
+import operator
+
 import aiopg
+import psycopg2
 
 
-DATABASE_VERSION = 12
+DATABASE_VERSION = 16
 
 
 async def init_dbconn(database_url):
@@ -215,17 +218,19 @@ class DatabaseConn:
         roles_to_remove: list,
         roles_to_add: list,
         action_time: datetime.datetime,
+        add_to_log: bool = True,
     ):
         async with self.pool.acquire() as conn:
             async with conn.cursor() as cur:
                 await cur.execute(
-                    "INSERT INTO pending_actions (user_id, type, roles_to_remove, roles_to_add, action_time) VALUES (%s, %s, %s, %s, %s)",
+                    "INSERT INTO pending_actions (user_id, type, roles_to_remove, roles_to_add, action_time, add_to_log) VALUES (%s, %s, %s, %s, %s, %s)",
                     (
                         user_id,
                         action_type,
                         roles_to_remove,
                         roles_to_add,
                         action_time,
+                        add_to_log,
                     ),
                 )
 

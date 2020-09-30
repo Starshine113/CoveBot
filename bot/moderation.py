@@ -78,7 +78,11 @@ class Moderation(commands.Cog):
         for action in actions:
             if action[4] < datetime.datetime.utcnow():
                 member = guild.get_member(action[5])
-                if action[1] == "mute" or action[1] == "hardmute":
+                if (
+                    action[1] == "mute"
+                    or action[1] == "hardmute"
+                    or action[1] == "pause"
+                ):
                     await self.unmute_inner(member, action[2], action[3])
                     await self.conn.add_to_mod_logs(
                         member.id, self.bot.user.id, "unmute", "Automatic unmute"
@@ -390,3 +394,48 @@ class Moderation(commands.Cog):
     async def unban_error(self, ctx, error):
         if isinstance(error, discord.HTTPException):
             await ctx.send("That user is not banned.")
+
+    @commands.command(help="Pauses a user for the specified duration.")
+    @commands.has_permissions(manage_messages=True)
+    async def pause(
+        self,
+        ctx,
+        member: discord.Member,
+        duration: Duration,
+        *,
+        reason: typing.Optional[str] = None,
+    ):
+        mute_role = ctx.guild.get_role(self.bot_config["moderation"]["pause_role"])
+        if member.top_role.position >= ctx.author.top_role.position:
+            await ctx.send("You are not high enough in the role hierarchy to do that.")
+            return True
+        if mute_role in member.roles:
+            await ctx.send(f"{member} is already paused.")
+            return True
+        await ctx.trigger_typing()
+        if not reason:
+            reason = "None"
+        expire_time = datetime.datetime.utcnow() + duration
+        await self.conn.set_pending_action(
+            member.id,
+            "pause",
+            [mute_role.id],
+            None,
+            expire_time,
+        )
+        await member.add_roles(mute_role)
+        await self.conn.add_to_mod_logs(member.id, ctx.author.id, "pause", reason)
+        await ctx.send(
+            f"**{ctx.message.author}** paused **{member}** for {duration}. Reason: {reason}"
+        )
+        await member.send(
+            f"You were paused in {ctx.guild.name} for {duration}. Reason: {reason}"
+        )
+        await self.make_log_embed(member, "paused", ctx.author, reason)
+
+    @mute.error
+    async def pause_error(self, ctx, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            await ctx.send(
+                f"```{ctx.prefix}pause <user: Member> <duration: Duration> [reason: str]```\nError: missing required parameter `{error.param.name}`"
+            )
