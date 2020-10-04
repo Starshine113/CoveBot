@@ -61,7 +61,7 @@ class UserCommands(commands.Cog):
         await ctx.send("Pong! Latency: {}ms".format(round(self.bot.latency * 1000, 2)))
 
     @commands.command(help="Say something in a channel", aliases=["say"])
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_permissions(manage_messages=True)
     async def echo(
         self, ctx, channel: typing.Optional[discord.TextChannel], *, args=None
     ):
@@ -71,22 +71,43 @@ class UserCommands(commands.Cog):
                 attachments.append(await attachment.to_file())
         else:
             attachments = None
-        if channel:
-            await channel.send(
-                content=args,
-                files=attachments,
-                allowed_mentions=discord.AllowedMentions(
-                    everyone=False, users=False, roles=False
-                ),
-            )
-        else:
-            await ctx.send(
-                content=args,
-                files=attachments,
-                allowed_mentions=discord.AllowedMentions(
-                    everyone=False, users=False, roles=False
-                ),
-            )
+        if not channel:
+            channel = ctx.message.channel
+        permissions = channel.permissions_for(ctx.author)
+        if permissions.read_messages and permissions.send_messages:
+            if permissions.manage_channels:
+                await channel.send(
+                    content=args,
+                    files=attachments,
+                    allowed_mentions=discord.AllowedMentions(
+                        everyone=False, users=True, roles=False
+                    ),
+                )
+            else:
+                if not args:
+                    return
+                embed = discord.Embed(colour=ctx.author.colour, description=args)
+                embed.set_author(
+                    name=str(ctx.author), icon_url=str(ctx.author.avatar_url)
+                )
+                embed.set_footer(text=f"Sent from #{ctx.message.channel.name}")
+                await channel.send(embed=embed)
+
+    @commands.command(help="Say something in a channel (force embed version)")
+    @commands.has_permissions(manage_messages=True)
+    async def embedecho(
+        self, ctx, channel: typing.Optional[discord.TextChannel], *, args=None
+    ):
+        if not args:
+            return
+        if not channel:
+            channel = ctx.message.channel
+        permissions = channel.permissions_for(ctx.author)
+        if permissions.read_messages and permissions.send_messages:
+            embed = discord.Embed(colour=ctx.author.colour, description=args)
+            embed.set_author(name=str(ctx.author), icon_url=str(ctx.author.avatar_url))
+            embed.set_footer(text=f"Sent from #{ctx.message.channel.name}")
+            await channel.send(embed=embed)
 
     @commands.command(help="Get a user's avatar", aliases=["pfp", "profile-picture"])
     @commands.cooldown(1, 1, commands.BucketType.channel)
@@ -122,10 +143,10 @@ class UserCommands(commands.Cog):
         embed.set_thumbnail(url=str(member.avatar_url))
         embed.set_footer(text=f"User ID: {member.id}")
         if isinstance(member, discord.Member):
+            embed.colour = ctx.author.colour
             embed.add_field(
                 name="Highest Rank", value=str(member.top_role), inline=True
             )
-        if isinstance(member, discord.Member):
             if member.status is discord.Status.online:
                 status = "online"
             elif member.status is discord.Status.idle:
@@ -151,8 +172,6 @@ class UserCommands(commands.Cog):
             joined_delta = datetime.datetime.utcnow() - member.joined_at
             joined_string = f"{member.joined_at.strftime('%Y-%m-%d %H:%M:%S')} UTC ({joined_delta.days} days ago)"
             embed.add_field(name="Joined", value=joined_string, inline=True)
-
-        if isinstance(member, discord.Member):
             roles = []
             for role in member.roles[1:]:
                 roles.append(role.mention)
