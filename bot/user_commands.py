@@ -124,7 +124,7 @@ class UserCommands(commands.Cog):
         embed.set_footer(text=f"User ID: {user.id}")
         await ctx.send(embed=embed)
 
-    @commands.command(help="Get information about a user", aliases=["i", "profile"])
+    @commands.command(help="Get information about a user", aliases=["i", "we", "profile"])
     @commands.cooldown(1, 1, commands.BucketType.channel)
     async def info(
         self,
