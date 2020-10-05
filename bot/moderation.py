@@ -17,13 +17,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import datetime
+import io
+import json
 import logging
 import math
 import re
 import typing
+
 import discord
 from discord.ext import commands, tasks
-
 
 time_match = re.compile(
     r"((?P<weeks>\d+)w)?((?P<days>\d+)d)?((?P<hours>\d+)h)?((?P<minutes>\d+)m)?"
@@ -433,9 +435,52 @@ class Moderation(commands.Cog):
         )
         await self.make_log_embed(member, "paused", ctx.author, reason)
 
-    @mute.error
+    @pause.error
     async def pause_error(self, ctx, error):
         if isinstance(error, commands.MissingRequiredArgument):
             await ctx.send(
                 f"```{ctx.prefix}pause <user: Member> <duration: Duration> [reason: str]```\nError: missing required parameter `{error.param.name}`"
             )
+
+    # export command
+
+    @commands.command(help="Export _all_ mod logs")
+    @commands.has_permissions(manage_guild=True)
+    async def export(self, ctx):
+        await ctx.trigger_typing()
+        data = await self.conn.export_all()
+        users = {}
+        json_export = {
+            "requester": str(ctx.message.author.id),
+            "timestamp": str(datetime.datetime.utcnow()),
+            "actions": [],
+        }
+        for action in data:
+            if action[1] in users:
+                user = users[action[1]]
+            else:
+                user = self.bot.get_user(action[1])
+                users[action[1]] = user
+            if action[2] in users:
+                mod = users[action[2]]
+            else:
+                mod = self.bot.get_user(action[2])
+                users[action[2]] = mod
+            action_json = {
+                "id": str(action[0]),
+                "user": {"id": str(action[1]), "username": str(user)},
+                "mod": {"id": str(action[2]), "username": str(mod)},
+                "type": action[3],
+                "reason": action[4],
+                "timestamp": str(action[5]),
+            }
+            json_export["actions"].append(action_json)
+        dump = json.dumps(json_export, indent=2)
+        export_file = io.BytesIO(bytes(dump, "utf-8"))
+        await ctx.send(
+            content="Here you go!",
+            file=discord.File(
+                export_file,
+                filename=f"export-{str(datetime.datetime.utcnow())}.json",
+            ),
+        )

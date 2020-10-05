@@ -119,6 +119,12 @@ async def on_ready():
             )
         if bot_config["cogs"]["enable_highlights"]:
             bot.add_cog(highlight.Highlights(bot, conn, logger))
+        if bot_config["cogs"]["enable_tickets"]:
+            bot.add_cog(
+                tickets.Tickets(
+                    bot, conn, await conn.get_ticket_settings(), bot_config, logger
+                )
+            )
 
     logger.log(logging.INFO, f"Bot ready")
 

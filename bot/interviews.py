@@ -17,10 +17,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import asyncio
-from datetime import datetime
 import io
 import logging
 import uuid
+from datetime import datetime
+
 import aiohttp
 import discord
 from discord.ext import commands

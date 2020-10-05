@@ -16,14 +16,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import asyncio
 import datetime
 import logging
 import re
 import typing
-import asyncio
-from cachetools import TTLCache
+
 import discord
-from discord import Embed
+from cachetools import TTLCache
 from discord.ext import commands
 
 
@@ -91,7 +91,7 @@ class Highlights(commands.Cog):
         for message in history:
             embed_desc += f"**[{message.created_at.strftime('%H:%M:%S')}] {message.author.display_name}:** {message.content}\n"
         embed_desc = embed_desc[:2000]
-        embed: Embed = discord.Embed(
+        embed: discord.Embed = discord.Embed(
             title=word,
             description=embed_desc,
             colour=discord.Colour(0xF8E71C),

@@ -19,6 +19,7 @@
 import logging
 import typing
 from datetime import datetime
+
 import discord
 from discord.ext import commands
 
@@ -41,11 +42,13 @@ class Notes(commands.Cog):
         reason: str,
     ):
         current_notes = await self.conn.list_notes(member.id)
-        if len(current_notes) >= 25:
+        if len(current_notes) >= 25:  # embeds have a maximum of 25 fields
             await ctx.send(
                 "This user has too many notes! A user can have up to 25 notes at any given time."
             )
-        elif len(reason) > 200:
+        elif (
+            len(reason) > 200
+        ):  # 200 characters to make sure we don't hit the 6000-character limit
             await ctx.send(
                 f"Note too long! A note can be up to 200 characters, this note is {len(reason)} characters."
             )
@@ -85,7 +88,11 @@ class Notes(commands.Cog):
         if not member:
             member = ctx.author
         notes = await self.conn.list_notes(member.id)
-        embed = discord.Embed(timestamp=datetime.utcnow(), title="Notes")
+        embed = discord.Embed(
+            timestamp=datetime.utcnow(),
+            title="Notes",
+            colour=discord.Colour(0x404ADD),
+        )
         embed.set_author(name=str(member), icon_url=str(member.avatar_url))
         embed.set_footer(text=f"ID: {member.id}", icon_url=str(ctx.me.avatar_url))
         if notes:

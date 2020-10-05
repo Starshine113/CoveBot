@@ -21,6 +21,7 @@ import logging
 import re
 import subprocess
 import typing
+
 import discord
 from discord.ext import commands
 
@@ -224,7 +225,7 @@ class UserCommands(commands.Cog):
         colour: str = "#000000",
         *,
         message: str,
-    ):
+    ) -> discord.Message:
         if not channel:
             channel = ctx.message.channel
         if colour.startswith("#"):
@@ -245,11 +246,12 @@ class UserCommands(commands.Cog):
                 embed = discord.Embed(
                     description=entries[0], colour=discord.Colour(colour_code)
                 )
-            await channel.send(embed=embed)
+            return await channel.send(embed=embed)
         else:
             await ctx.send(
                 "❌ You do not have the manage messages permission in that channel."
             )
+            return None
 
     @commands.command(name="setstatus")
     @commands.is_owner()

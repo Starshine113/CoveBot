@@ -302,6 +302,99 @@ class DatabaseConn:
                 await cur.execute("SELECT * FROM highlights")
                 return await cur.fetchall()
 
+    # ticket functions
+
+    async def get_ticket_settings(self):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT * FROM tickets_config")
+                return await cur.fetchone()
+
+    async def set_ticket_channel(self, channel_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "UPDATE tickets_config SET listen_channel = %s WHERE id = 1",
+                    (channel_id,),
+                )
+
+    async def set_ticket_message(self, message_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "UPDATE tickets_config SET listen_message = %s WHERE id = 1",
+                    (message_id,),
+                )
+
+    async def add_ticket_channel(self, channel_id: int, user_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO tickets (channel_id, user_id, ticket_status) VALUES (%s, %s, true)",
+                    (channel_id, user_id),
+                )
+
+    async def remove_ticket_channel(self, channel_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "DELETE FROM tickets WHERE channel_id = %s", (channel_id,)
+                )
+
+    async def get_tickets_for_user(self, user_id: int) -> int:
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT * FROM tickets WHERE user_id = %s", (user_id,)
+                )
+                return len(await cur.fetchall())
+
+    async def get_ticket(self, channel_id):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "SELECT * FROM tickets WHERE channel_id = %s", (channel_id,)
+                )
+                return await cur.fetchone()
+
+    # role functions
+
+    async def add_role(self, role_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "INSERT INTO selfroles (role_id) VALUES (%s)", (role_id,)
+                )
+
+    async def del_role(self, role_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute(
+                    "DELETE FROM selfroles WHERE role_id = %s", (role_id,)
+                )
+
+    async def fetch_roles(self):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT role_id FROM selfroles")
+                x = cur.fetchall()
+                x = reduce(operator.concat, x)
+                return x
+
+    # export commands
+
+    async def export_all(self):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT * FROM modactions")
+                return await cur.fetchall()
+    
+    async def export_user(self, user_id: int):
+        async with self.pool.acquire() as conn:
+            async with conn.cursor() as cur:
+                await cur.execute("SELECT * FROM modactions WHERE user_id = %s", (user_id,))
+                return await cur.fetchall()
+
     # database initialisation functions
 
     async def init_db_if_not_initialised(self):
