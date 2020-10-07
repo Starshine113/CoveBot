@@ -59,7 +59,14 @@ class UserCommands(commands.Cog):
     @commands.command(help="Show the bot's latency.")
     @commands.cooldown(1, 3, commands.BucketType.channel)
     async def ping(self, ctx):
-        await ctx.send("Pong! Latency: {}ms".format(round(self.bot.latency * 1000, 2)))
+        latency = round(self.bot.latency * 1000, 2)
+        current_time = datetime.datetime.utcnow()
+        message = await ctx.send(f"Pong!\nHeartbeat: {latency}ms")
+        difference = datetime.datetime.utcnow() - current_time
+        msg_latency = round(difference.microseconds / 1000, 2)
+        await message.edit(
+            content=f"Pong!\nHeartbeat: {latency}ms\nMessage latency: {msg_latency}ms"
+        )
 
     @commands.command(help="Say something in a channel", aliases=["say"])
     @commands.has_permissions(manage_messages=True)
