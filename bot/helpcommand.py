@@ -189,4 +189,7 @@ class HelpCommand(commands.Cog):
             embed6.set_footer(text=common_footer)
             help_embeds.append(embed6)
 
+        for index, embed in enumerate(help_embeds, start=1):
+            embed.title = embed.title + f" (page {index}/{len(help_embeds)})"
+
         return help_embeds
