@@ -98,7 +98,7 @@ class Moderation(commands.Cog):
                     await self.conn.delete_pending_action(action[0])
 
     @commands.command(help="Warn a user.")
-    @commands.has_permissions(manage_messages=True)
+    @commands.has_guild_permissions(manage_messages=True)
     async def warn(self, ctx, member: discord.Member, *, reason: str):
         if member.id == self.bot.user.id:
             await ctx.send("But why? <:meowsob:759071377562009620>")
@@ -110,7 +110,7 @@ class Moderation(commands.Cog):
         await ctx.send(f"Warned **{member}**.")
 
     @commands.command(help="Mute a user for the specified duration.")
-    @commands.has_permissions(manage_messages=True)
+    @commands.has_guild_permissions(manage_messages=True)
     async def mute(
         self,
         ctx,
@@ -155,7 +155,7 @@ class Moderation(commands.Cog):
             )
 
     @commands.command(help="Hardmute a user for the specified duration.")
-    @commands.has_permissions(kick_members=True)
+    @commands.has_guild_permissions(kick_members=True)
     async def hardmute(
         self,
         ctx,
@@ -209,7 +209,7 @@ class Moderation(commands.Cog):
             )
 
     @commands.command(help="Unmute a user.")
-    @commands.has_permissions(manage_messages=True)
+    @commands.has_guild_permissions(manage_messages=True)
     async def unmute(
         self,
         ctx,
@@ -273,7 +273,7 @@ class Moderation(commands.Cog):
         await log_channel.send(embed=embed)
 
     @commands.command(help="Lock a channel", aliases=["lock", "ld"])
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_guild_permissions(manage_guild=True)
     async def lockdown(self, ctx, channel: typing.Optional[discord.TextChannel] = None):
         if not channel:
             channel = ctx.message.channel
@@ -285,7 +285,7 @@ class Moderation(commands.Cog):
         await ctx.send(f"✅ Locked down <#{channel.id}>.")
 
     @commands.command(help="Unlock a channel", aliases=["unlock", "uld"])
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_guild_permissions(manage_guild=True)
     async def unlockdown(
         self, ctx, channel: typing.Optional[discord.TextChannel] = None
     ):
@@ -298,7 +298,7 @@ class Moderation(commands.Cog):
         await ctx.send(f"✅ Unlocked <#{channel.id}>.")
 
     @commands.command(help="Set a channel's slowmode")
-    @commands.has_permissions(manage_messages=True)
+    @commands.has_guild_permissions(manage_messages=True)
     async def slowmode(
         self, ctx, delay: int, channel: typing.Optional[discord.TextChannel] = None
     ):
@@ -323,7 +323,7 @@ class Moderation(commands.Cog):
             )
 
     @commands.command(help="Show a user's moderation logs.")
-    @commands.has_permissions(manage_messages=True)
+    @commands.has_guild_permissions(manage_messages=True)
     async def modlogs(
         self,
         ctx,
@@ -376,7 +376,7 @@ class Moderation(commands.Cog):
         return embed
 
     @commands.command(help="Mass-ban users with an optional reason.")
-    @commands.has_permissions(ban_members=True, manage_guild=True)
+    @commands.has_guild_permissions(ban_members=True, manage_guild=True)
     async def massban(self, ctx, users: commands.Greedy[discord.User]):
         await ctx.trigger_typing()
         for user in users:
@@ -384,7 +384,7 @@ class Moderation(commands.Cog):
         await ctx.send(f"Banned {len(users)} users.")
 
     @commands.command(help="Unban a user with an optional reason.")
-    @commands.has_permissions(ban_members=True)
+    @commands.has_guild_permissions(ban_members=True)
     async def unban(self, ctx, user: discord.User, *, reason: str = "None"):
         await ctx.trigger_typing()
         await ctx.guild.unban(
@@ -398,7 +398,7 @@ class Moderation(commands.Cog):
             await ctx.send("That user is not banned.")
 
     @commands.command(help="Pauses a user for the specified duration.")
-    @commands.has_permissions(manage_messages=True)
+    @commands.has_guild_permissions(manage_messages=True)
     async def pause(
         self,
         ctx,
@@ -445,7 +445,7 @@ class Moderation(commands.Cog):
     # export command
 
     @commands.command(help="Export _all_ mod logs")
-    @commands.has_permissions(manage_guild=True)
+    @commands.has_guild_permissions(manage_guild=True)
     async def export(self, ctx):
         await ctx.trigger_typing()
         data = await self.conn.export_all()
@@ -481,6 +481,6 @@ class Moderation(commands.Cog):
             content="Here you go!",
             file=discord.File(
                 export_file,
-                filename=f"export-{str(datetime.datetime.utcnow())}.json",
+                filename="export.json",
             ),
         )
